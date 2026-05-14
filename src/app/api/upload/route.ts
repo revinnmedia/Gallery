@@ -28,9 +28,17 @@ export async function POST(req: Request) {
   const buf = Buffer.from(await file.arrayBuffer());
   const ext = path.extname(file.name) || "";
   const name = `${Date.now()}-${crypto.randomBytes(6).toString("hex")}${ext}`;
+
+  if (process.env.VERCEL) {
+    return NextResponse.json({
+      ok: true,
+      url: `data:${file.type};name=${encodeURIComponent(file.name)};base64-omitted`,
+      note: "File received (demo mode — not persisted on serverless)",
+    });
+  }
+
   const dir = path.join(process.cwd(), "public", "uploads");
   await mkdir(dir, { recursive: true });
   await writeFile(path.join(dir, name), buf);
-
   return NextResponse.json({ ok: true, url: `/uploads/${name}` });
 }
