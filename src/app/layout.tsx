@@ -7,6 +7,17 @@ import { getCurrentUser } from "@/lib/auth";
 export const metadata: Metadata = {
   title: "مطبعة | Matba3ah",
   description: "منصة طباعة تربطك بأفضل المطابع — Uber for printing.",
+  manifest: "/manifest.json",
+  themeColor: "#1f56e6",
+  appleWebApp: {
+    capable: true,
+    title: "مطبعة",
+    statusBarStyle: "black-translucent",
+  },
+  icons: {
+    icon: "/icons/icon.svg",
+    apple: "/icons/icon.svg",
+  },
 };
 
 export default async function RootLayout({

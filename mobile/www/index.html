@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>مطبعة</title>
+    <style>
+      html, body {
+        margin: 0;
+        height: 100%;
+        background: #1f56e6;
+        color: white;
+        font-family: system-ui, -apple-system, "Segoe UI", "Cairo", sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .wrap { text-align: center; padding: 2rem; }
+      .logo { font-size: 2.5rem; font-weight: 800; letter-spacing: -1px; }
+      .sub { opacity: 0.85; margin-top: 0.5rem; font-size: 0.95rem; }
+      .spinner {
+        margin: 1.5rem auto 0;
+        width: 32px; height: 32px;
+        border: 3px solid rgba(255,255,255,0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.9s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="logo">مطبعة</div>
+      <div class="sub">جاري التحميل…</div>
+      <div class="spinner"></div>
+    </div>
+  </body>
+</html>
