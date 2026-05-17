@@ -5,6 +5,8 @@ import { getDict, getLocale } from "@/lib/i18n";
 import { formatDate } from "@/lib/utils";
 import { OrderStatusActions } from "@/components/vendor/OrderStatusActions";
 import { OrderChat } from "@/components/order/OrderChat";
+import { OrderStepper } from "@/components/order/OrderStepper";
+import { normalizeStatus } from "@/lib/orderStages";
 
 export default async function VendorOrderDetail({ params }: { params: { id: string } }) {
   const user = await getCurrentUser();
@@ -34,10 +36,14 @@ export default async function VendorOrderDetail({ params }: { params: { id: stri
           </div>
           <div className="flex gap-2">
             <span className={`badge status-${order.paymentStatus}`}>{order.paymentStatus}</span>
-            <span className={`badge status-${order.status}`}>
-              {dict.order.status[order.status]}
+            <span className={`badge status-${normalizeStatus(order.status)}`}>
+              {dict.order.status[normalizeStatus(order.status)]}
             </span>
           </div>
+        </div>
+
+        <div className="mt-5 border-t pt-4">
+          <OrderStepper status={order.status} dict={dict} />
         </div>
 
         <div className="mt-5 border-t pt-4">
@@ -83,7 +89,7 @@ export default async function VendorOrderDetail({ params }: { params: { id: stri
             <li key={t.id} className="ms-4">
               <div className="absolute w-3 h-3 rounded-full bg-brand-600 -start-[7px] mt-1.5" />
               <div className="text-xs text-gray-500">{formatDate(t.createdAt, locale)}</div>
-              <div className="font-medium">{dict.order.status[t.status]}</div>
+              <div className="font-medium">{dict.order.status[normalizeStatus(t.status)]}</div>
               {t.note && <p className="text-sm text-gray-600">{t.note}</p>}
             </li>
           ))}

@@ -88,19 +88,22 @@ html[dir="rtl"] body { font-family: "Cairo", "Tajawal", system-ui, sans-serif; }
   font-weight: 500;
 }
 
-.status-PENDING { background: #fef3c7; color: #92400e; }
-.status-ACCEPTED { background: #dbeafe; color: #1e40af; }
-.status-IN_PRODUCTION { background: #ede9fe; color: #5b21b6; }
-.status-READY { background: #cffafe; color: #155e75; }
-.status-DELIVERING { background: #fed7aa; color: #9a3412; }
+.status-NEW { background: #fef3c7; color: #92400e; }
+.status-PREPARING { background: #dbeafe; color: #1e40af; }
+.status-PRINTING { background: #ede9fe; color: #5b21b6; }
+.status-DELIVERY { background: #fed7aa; color: #9a3412; }
 .status-COMPLETED { background: #d1fae5; color: #065f46; }
 .status-CANCELLED { background: #fee2e2; color: #991b1b; }
-.status-REJECTED { background: #fee2e2; color: #991b1b; }
 .status-APPROVED { background: #d1fae5; color: #065f46; }
 .status-PENDING_APPROVAL { background: #fef3c7; color: #92400e; }
 .status-SUSPENDED { background: #fee2e2; color: #991b1b; }
 .status-PAID { background: #d1fae5; color: #065f46; }
 .status-UNPAID { background: #fef3c7; color: #92400e; }
+
+.stage-col-NEW { background: #fffbeb; border-color: #fde68a; }
+.stage-col-PREPARING { background: #eff6ff; border-color: #bfdbfe; }
+.stage-col-PRINTING { background: #f5f3ff; border-color: #ddd6fe; }
+.stage-col-DELIVERY { background: #fff7ed; border-color: #fed7aa; }
 
 .container-app {
   max-width: 1200px;

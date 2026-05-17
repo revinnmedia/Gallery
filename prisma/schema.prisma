@@ -95,7 +95,7 @@ model Order {
   code          String   @unique
   customerId    String
   vendorId      String
-  status        String   @default("PENDING")
+  status        String   @default("NEW")
   paymentStatus String   @default("UNPAID")
   subtotal      Float
   deliveryFee   Float    @default(0)
