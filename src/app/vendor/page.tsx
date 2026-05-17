@@ -2,6 +2,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getDict, getLocale } from "@/lib/i18n";
 import Link from "next/link";
+import { normalizeStatus } from "@/lib/orderStages";
 
 export default async function VendorHome() {
   const user = await getCurrentUser();
@@ -12,7 +13,7 @@ export default async function VendorHome() {
 
   const [total, pending, completed, revenue, latestOrders] = await Promise.all([
     prisma.order.count({ where: { vendorId } }),
-    prisma.order.count({ where: { vendorId, status: "PENDING" } }),
+    prisma.order.count({ where: { vendorId, status: { in: ["NEW", "PENDING"] } } }),
     prisma.order.count({ where: { vendorId, status: "COMPLETED" } }),
     prisma.order.aggregate({
       where: { vendorId, paymentStatus: "PAID" },
@@ -77,8 +78,8 @@ export default async function VendorHome() {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-sm">{o.total.toFixed(2)} {dict.common.sar}</span>
-                    <span className={`badge status-${o.status}`}>
-                      {dict.order.status[o.status]}
+                    <span className={`badge status-${normalizeStatus(o.status)}`}>
+                      {dict.order.status[normalizeStatus(o.status)]}
                     </span>
                   </div>
                 </Link>

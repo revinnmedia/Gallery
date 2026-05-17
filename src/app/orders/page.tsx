@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { getDict, getLocale } from "@/lib/i18n";
+import { OrderStepper } from "@/components/order/OrderStepper";
+import { normalizeStatus } from "@/lib/orderStages";
 
 export default async function OrdersPage() {
   const user = await getCurrentUser();
@@ -27,20 +29,23 @@ export default async function OrdersPage() {
             <Link
               key={o.id}
               href={`/orders/${o.id}`}
-              className="card p-4 hover:border-brand-400 flex flex-wrap items-center justify-between gap-3"
+              className="card p-4 hover:border-brand-400 block space-y-3"
             >
-              <div>
-                <div className="text-xs text-gray-500">{dict.order.orderCode}: {o.code}</div>
-                <div className="font-semibold">
-                  {locale === "ar" ? o.vendor.shopName : o.vendor.shopNameEn || o.vendor.shopName}
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="text-xs text-gray-500">{dict.order.orderCode}: {o.code}</div>
+                  <div className="font-semibold">
+                    {locale === "ar" ? o.vendor.shopName : o.vendor.shopNameEn || o.vendor.shopName}
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {o.items.length} {locale === "ar" ? "صنف" : "items"} — {o.total.toFixed(2)} {dict.common.sar}
+                  </div>
                 </div>
-                <div className="text-sm text-gray-600">
-                  {o.items.length} {locale === "ar" ? "صنف" : "items"} — {o.total.toFixed(2)} {dict.common.sar}
-                </div>
+                <span className={`badge status-${normalizeStatus(o.status)}`}>
+                  {dict.order.status[normalizeStatus(o.status)]}
+                </span>
               </div>
-              <span className={`badge status-${o.status}`}>
-                {dict.order.status[o.status]}
-              </span>
+              <OrderStepper status={o.status} dict={dict} />
             </Link>
           ))}
         </div>

@@ -51,7 +51,7 @@ export async function POST(req: Request) {
       code: generateOrderCode(),
       customerId: session.uid,
       vendorId: service.vendorId,
-      status: "PENDING",
+      status: "NEW",
       paymentStatus: "UNPAID",
       subtotal,
       deliveryFee,
@@ -72,7 +72,7 @@ export async function POST(req: Request) {
         },
       },
       timeline: {
-        create: { status: "PENDING", note: "Order created" },
+        create: { status: "NEW", note: "Order created" },
       },
     },
   });

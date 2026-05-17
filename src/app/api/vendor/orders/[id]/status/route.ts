@@ -4,14 +4,12 @@ import { getSession } from "@/lib/auth";
 import { z } from "zod";
 const schema = z.object({
   status: z.enum([
-    "PENDING",
-    "ACCEPTED",
-    "IN_PRODUCTION",
-    "READY",
-    "DELIVERING",
+    "NEW",
+    "PREPARING",
+    "PRINTING",
+    "DELIVERY",
     "COMPLETED",
     "CANCELLED",
-    "REJECTED",
   ]),
 });
 

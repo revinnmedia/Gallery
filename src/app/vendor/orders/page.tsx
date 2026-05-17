@@ -2,6 +2,8 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getDict } from "@/lib/i18n";
+import { OrderTracker } from "@/components/vendor/OrderTracker";
+import { isActive, normalizeStatus } from "@/lib/orderStages";
 
 export default async function VendorOrders() {
   const user = await getCurrentUser();
@@ -14,34 +16,49 @@ export default async function VendorOrders() {
     orderBy: { createdAt: "desc" },
   });
 
+  const activeOrders = orders
+    .filter((o) => isActive(o.status))
+    .map((o) => ({
+      id: o.id,
+      code: o.code,
+      status: o.status,
+      total: o.total,
+      customerName: o.customer.name,
+      createdAt: o.createdAt,
+    }));
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <h2 className="text-xl font-bold">{dict.vendor.myOrders}</h2>
+
+      <OrderTracker orders={activeOrders} dict={dict} />
+
       {orders.length === 0 ? (
         <div className="card p-10 text-center text-gray-500">{dict.order.noOrders}</div>
       ) : (
         <div className="card divide-y">
-          {orders.map((o) => (
-            <Link
-              key={o.id}
-              href={`/vendor/orders/${o.id}`}
-              className="p-4 flex flex-wrap items-center justify-between gap-3 hover:bg-gray-50"
-            >
-              <div>
-                <div className="text-xs text-gray-500">{o.code}</div>
-                <div className="font-semibold">{o.customer.name}</div>
-                <div className="text-sm text-gray-500">
-                  {o.items.length} items — {o.total.toFixed(2)} {dict.common.sar}
+          {orders.map((o) => {
+            const s = normalizeStatus(o.status);
+            return (
+              <Link
+                key={o.id}
+                href={`/vendor/orders/${o.id}`}
+                className="p-4 flex flex-wrap items-center justify-between gap-3 hover:bg-gray-50"
+              >
+                <div>
+                  <div className="text-xs text-gray-500">{o.code}</div>
+                  <div className="font-semibold">{o.customer.name}</div>
+                  <div className="text-sm text-gray-500">
+                    {o.items.length} items — {o.total.toFixed(2)} {dict.common.sar}
+                  </div>
                 </div>
-              </div>
-              <div className="flex gap-2">
-                <span className={`badge status-${o.paymentStatus}`}>{o.paymentStatus}</span>
-                <span className={`badge status-${o.status}`}>
-                  {dict.order.status[o.status]}
-                </span>
-              </div>
-            </Link>
-          ))}
+                <div className="flex gap-2">
+                  <span className={`badge status-${o.paymentStatus}`}>{o.paymentStatus}</span>
+                  <span className={`badge status-${s}`}>{dict.order.status[s]}</span>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>

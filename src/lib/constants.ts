@@ -6,14 +6,12 @@ export const Role = {
 export type Role = (typeof Role)[keyof typeof Role];
 
 export const OrderStatus = {
-  PENDING: "PENDING",
-  ACCEPTED: "ACCEPTED",
-  IN_PRODUCTION: "IN_PRODUCTION",
-  READY: "READY",
-  DELIVERING: "DELIVERING",
+  NEW: "NEW",
+  PREPARING: "PREPARING",
+  PRINTING: "PRINTING",
+  DELIVERY: "DELIVERY",
   COMPLETED: "COMPLETED",
   CANCELLED: "CANCELLED",
-  REJECTED: "REJECTED",
 } as const;
 export type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus];
 

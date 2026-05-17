@@ -4,17 +4,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { OrderStatus } from "@/lib/constants";
 import type { Dictionary } from "@/lib/i18n";
-
-const NEXT: Record<OrderStatus, OrderStatus[]> = {
-  PENDING: ["ACCEPTED", "REJECTED"],
-  ACCEPTED: ["IN_PRODUCTION", "CANCELLED"],
-  IN_PRODUCTION: ["READY", "CANCELLED"],
-  READY: ["DELIVERING", "COMPLETED"],
-  DELIVERING: ["COMPLETED"],
-  COMPLETED: [],
-  CANCELLED: [],
-  REJECTED: [],
-};
+import { NEXT_STATUS, normalizeStatus } from "@/lib/orderStages";
 
 export function OrderStatusActions({
   orderId,
@@ -27,7 +17,8 @@ export function OrderStatusActions({
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
-  const options = NEXT[status as OrderStatus] ?? [];
+  const normalized = normalizeStatus(status);
+  const options = NEXT_STATUS[normalized] ?? [];
 
   if (!options.length) {
     return <p className="text-sm text-gray-500">—</p>;
@@ -51,7 +42,7 @@ export function OrderStatusActions({
           key={next}
           onClick={() => update(next)}
           disabled={pending}
-          className={`btn ${next === "REJECTED" || next === "CANCELLED" ? "btn-danger" : "btn-primary"}`}
+          className={`btn ${next === "CANCELLED" ? "btn-danger" : "btn-primary"}`}
         >
           → {dict.order.status[next]}
         </button>
