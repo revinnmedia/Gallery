@@ -1,0 +1,60 @@
+# بناء ورفع كنز المسلم بدون جهاز Mac. انظر docs/SETUP.md (القسم ٥).
+workflows:
+  ios-release:
+    name: iOS → TestFlight
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: Kanz ASC Key   # اسم مفتاح API في Codemagic
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.sci3ntist.com.kanzalmuslim
+    scripts:
+      - name: Dependencies
+        script: flutter pub get
+      - name: Tests
+        script: flutter test
+      - name: Pods
+        script: find . -name "Podfile" -execdir pod install --repo-update \;
+      - name: Signing
+        script: xcode-project use-profiles
+      - name: Build IPA
+        script: |
+          flutter build ipa --release \
+            --build-number=$(($(app-store-connect get-latest-app-store-build-number "$APP_STORE_APPLE_ID" 2>/dev/null || echo 19) + 1)) \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+
+  android-release:
+    name: Android → Play (Internal testing)
+    max_build_duration: 45
+    instance_type: linux_x2
+    environment:
+      flutter: stable
+      android_signing:
+        - kanz_keystore
+      groups:
+        - google_play   # يحتوي GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+    scripts:
+      - name: Dependencies
+        script: flutter pub get
+      - name: Tests
+        script: flutter test
+      - name: Build AAB
+        script: flutter build appbundle --release --build-number=$BUILD_NUMBER
+    artifacts:
+      - build/app/outputs/bundle/release/*.aab
+    publishing:
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+        submit_as_draft: true

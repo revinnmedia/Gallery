@@ -1,0 +1,125 @@
+// يولّد صور للشاشات لمراجعة التصميم:
+// flutter test test/screenshots --update-goldens
+@Tags(['screenshots'])
+library;
+
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:kanz_almuslim/app.dart';
+import 'package:kanz_almuslim/models.dart';
+import 'package:kanz_almuslim/services/audio_service.dart';
+import 'package:kanz_almuslim/services/cloud_service.dart';
+import 'package:kanz_almuslim/state/app_state.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+Future<void> _loadFont(String family, List<String> paths) async {
+  final loader = FontLoader(family);
+  for (final p in paths) {
+    loader.addFont(Future.value(ByteData.sublistView(File(p).readAsBytesSync())));
+  }
+  await loader.load();
+}
+
+Future<AppState> _state({String lang = 'ar'}) async {
+  SharedPreferences.setMockInitialValues({
+    'soundOn': false,
+    'language': lang,
+    'total': 3934,
+    'cycles': '{"d1": 21}',
+    'autoReminder': true,
+    'autoInterval': 5,
+    'customReminderOn': true,
+    'customReminders':
+        '[{"id":"c1","text":"أستغفر الله","interval":60,"enabled":true},{"id":"c2","text":"سبحان الله وبحمده","interval":120,"enabled":true}]',
+  });
+  final s = AppState(await SharedPreferences.getInstance());
+  // سجل تجريبي لآخر ٣٠ يوماً.
+  final now = DateTime.now();
+  for (var i = 0; i < 30; i++) {
+    final d = now.subtract(Duration(days: i));
+    if (i % 7 == 5) continue;
+    s.history[dayKey(d)] = {
+      'd1': 33 + (i * 17) % 90,
+      'd7': 100 - (i * 13) % 70,
+      if (i % 2 == 0) 'd5': 33,
+    };
+  }
+  return s;
+}
+
+Future<void> _pump(WidgetTester t, AppState s) async {
+  t.view.physicalSize = const Size(1179, 2556);
+  t.view.devicePixelRatio = 3;
+  await t.pumpWidget(MultiProvider(
+    providers: [
+      ChangeNotifierProvider.value(value: s),
+      ChangeNotifierProvider.value(value: CloudService.instance),
+    ],
+    child: const KanzApp(),
+  ));
+  await t.pumpAndSettle();
+}
+
+void main() {
+  setUpAll(() async {
+    AudioService.enabled = false;
+    await _loadFont('Tajawal', [
+      'assets/fonts/Tajawal-ExtraLight.ttf',
+      'assets/fonts/Tajawal-Light.ttf',
+      'assets/fonts/Tajawal-Regular.ttf',
+      'assets/fonts/Tajawal-Medium.ttf',
+      'assets/fonts/Tajawal-Bold.ttf',
+    ]);
+    final flutterRoot = Platform.environment['FLUTTER_ROOT'] ?? '/opt/flutter';
+    await _loadFont('MaterialIcons', ['$flutterRoot/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf']);
+  });
+
+  Future<void> shot(WidgetTester t, String name) =>
+      expectLater(find.byType(MaterialApp), matchesGoldenFile('out/$name.png'));
+
+  testWidgets('01 tasbeeh', (t) async {
+    await _pump(t, await _state());
+    await shot(t, '01_tasbeeh');
+  });
+
+  testWidgets('02 records', (t) async {
+    await _pump(t, await _state());
+    await t.tap(find.text('السجل'));
+    await t.pumpAndSettle();
+    await shot(t, '02_records');
+  });
+
+  testWidgets('03 notifications', (t) async {
+    await _pump(t, await _state());
+    await t.tap(find.text('الاشعارات'));
+    await t.pumpAndSettle();
+    await shot(t, '03_notifications');
+  });
+
+  testWidgets('04 settings', (t) async {
+    await _pump(t, await _state());
+    await t.tap(find.text('الاعدادات'));
+    await t.pumpAndSettle();
+    await shot(t, '04_settings');
+  });
+
+  testWidgets('05 support', (t) async {
+    await _pump(t, await _state());
+    await t.tap(find.byIcon(Icons.favorite_border).first);
+    await t.pumpAndSettle();
+    await shot(t, '05_support');
+  });
+
+  testWidgets('06 celebration', (t) async {
+    final s = await _state();
+    s.total = 3999;
+    await _pump(t, s);
+    await t.tapAt(const Offset(196, 400));
+    await t.pumpAndSettle();
+    await shot(t, '06_celebration');
+  });
+}
