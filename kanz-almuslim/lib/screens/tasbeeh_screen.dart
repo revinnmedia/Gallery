@@ -10,7 +10,7 @@ import '../theme.dart';
 import '../widgets/bead_ring.dart';
 import '../widgets/fingers_row.dart';
 import '../widgets/orbit_layer.dart';
-import '../widgets/pattern_background.dart';
+import '../widgets/kanz_ui.dart';
 import 'manage_dhikr_screen.dart';
 
 class TasbeehScreen extends StatefulWidget {
@@ -178,7 +178,7 @@ class _TasbeehScreenState extends State<TasbeehScreen> with TickerProviderStateM
     final cycle = _fresh ? 0 : state.displayCount;
     final lit = _fresh ? 0 : _litFor(state);
 
-    return PatternBackground(
+    return KanzBackground(
       child: Stack(
         children: [
           AnimatedBuilder(
