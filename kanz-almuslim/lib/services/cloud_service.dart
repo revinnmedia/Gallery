@@ -16,10 +16,13 @@ import 'demo_cloud.dart';
 enum RankPeriod { day, week, month, all }
 
 class FriendRequest {
-  const FriendRequest({required this.id, required this.fromUid, required this.fromName});
+  const FriendRequest({required this.id, required this.fromUid, required this.fromName, this.message = ''});
   final String id;
   final String fromUid;
   final String fromName;
+
+  /// رسالة دعوة المنافسة (آية قرآنية وكلمة اختيارية).
+  final String message;
 }
 
 class ChatMessage {
@@ -372,7 +375,7 @@ class CloudService extends ChangeNotifier {
   }
 
   /// يرجع false إذا الرمز غير موجود.
-  Future<bool> sendFriendRequest(String code) async {
+  Future<bool> sendFriendRequest(String code, {String message = ''}) async {
     if (demo != null) return code.trim().length >= 4 && code.trim().toUpperCase() != DemoCloud.myCode;
     final u = user;
     if (u == null) return false;
@@ -385,6 +388,8 @@ class CloudService extends ChangeNotifier {
       'from': u.uid,
       'to': to,
       'fromName': displayName,
+      if (message.trim().isNotEmpty)
+        'message': message.trim().length > 300 ? message.trim().substring(0, 300) : message.trim(),
       'createdAt': FieldValue.serverTimestamp(),
     });
     return true;
@@ -405,6 +410,7 @@ class CloudService extends ChangeNotifier {
                   id: d.id,
                   fromUid: d.data()['from'] as String,
                   fromName: (d.data()['fromName'] as String?) ?? '',
+                  message: (d.data()['message'] as String?) ?? '',
                 ),
               )
               .toList(),

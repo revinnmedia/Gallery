@@ -9,6 +9,7 @@ import '../services/demo_cloud.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/avatar.dart';
+import 'challenge_sheet.dart';
 import 'chat_screen.dart';
 import 'sign_in_sheet.dart';
 
@@ -28,7 +29,7 @@ class FriendsScreen extends StatelessWidget {
             IconButton(
               tooltip: tr(context, 'addFriend'),
               icon: const Icon(Icons.person_add_alt_1),
-              onPressed: () => _addFriend(context),
+              onPressed: () => showChallengeSheet(context),
             ),
         ],
       ),
@@ -41,8 +42,11 @@ class FriendsScreen extends StatelessWidget {
                   children: [
                     const Icon(Icons.people_outline, size: 64, color: KanzColors.paleAqua),
                     const SizedBox(height: 16),
-                    Text(tr(context, 'noFriends'),
-                        textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleMedium),
+                    Text(
+                      tr(context, 'noFriends'),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                     const SizedBox(height: 8),
                     Text(tr(context, 'cloudOff'), style: const TextStyle(color: Colors.white60)),
                   ],
@@ -50,101 +54,99 @@ class FriendsScreen extends StatelessWidget {
               ),
             )
           : !cloud.signedIn
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.people_outline, size: 64, color: KanzColors.paleAqua),
-                        const SizedBox(height: 16),
-                        Text(tr(context, 'noFriends'),
-                            textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleMedium),
-                        const SizedBox(height: 20),
-                        FilledButton(
-                          onPressed: () => showSignInSheet(context),
-                          child: Text(tr(context, 'signIn')),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              : ListView(
-                  padding: const EdgeInsets.only(bottom: 24),
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    _CodeCard(code: cloud.friendCode),
-                    StreamBuilder<List<FriendRequest>>(
-                      stream: cloud.incomingRequests(),
-                      builder: (context, snap) {
-                        final reqs = snap.data ?? [];
-                        if (reqs.isEmpty) return const SizedBox.shrink();
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _SectionTitle(tr(context, 'requests')),
-                            ...reqs.map((r) => Card(
-                                  child: ListTile(
-                                    leading: Avatar(name: r.fromName),
-                                    title: Text(r.fromName),
-                                    trailing: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        IconButton(
-                                          tooltip: tr(context, 'decline'),
-                                          icon: const Icon(Icons.close),
-                                          onPressed: () => cloud.declineRequest(r),
-                                        ),
-                                        IconButton.filled(
-                                          tooltip: tr(context, 'accept'),
-                                          style: IconButton.styleFrom(backgroundColor: KanzColors.switchGreen),
-                                          icon: const Icon(Icons.check),
-                                          onPressed: () => cloud.acceptRequest(r),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                )),
-                          ],
-                        );
-                      },
+                    const Icon(Icons.people_outline, size: 64, color: KanzColors.paleAqua),
+                    const SizedBox(height: 16),
+                    Text(
+                      tr(context, 'noFriends'),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    _SectionTitle(tr(context, 'friends')),
-                    StreamBuilder<List<RankEntry>>(
-                      stream: cloud.friendsStream(),
-                      builder: (context, snap) {
-                        if (!snap.hasData) {
-                          return const Padding(
-                            padding: EdgeInsets.all(24),
-                            child: Center(child: CircularProgressIndicator()),
-                          );
-                        }
-                        final friends = snap.data!;
-                        if (friends.isEmpty) {
-                          return Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Text(tr(context, 'noFriends'), textAlign: TextAlign.center),
-                          );
-                        }
-                        return Column(
-                          children: friends
-                              .map((f) => Card(
-                                    child: ListTile(
-                                      leading: Avatar(name: f.name, url: f.photoUrl),
-                                      title: Text(f.name),
-                                      subtitle: Text('${tr(context, 'total')}: ${fmtNum(context, f.score)}'),
-                                      trailing: const Icon(Icons.chat_bubble_outline),
-                                      onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                                        builder: (_) => ChatScreen(friend: f),
-                                      )),
-                                      onLongPress: () => _confirmRemove(context, f),
-                                    ),
-                                  ))
-                              .toList(),
-                        );
-                      },
+                    const SizedBox(height: 20),
+                    FilledButton(
+                      onPressed: () => showSignInSheet(context),
+                      child: Text(tr(context, 'signIn')),
                     ),
                   ],
                 ),
+              ),
+            )
+          : ListView(
+              padding: const EdgeInsets.only(bottom: 24),
+              children: [
+                _CodeCard(code: cloud.friendCode),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: KanzColors.gold,
+                      foregroundColor: KanzColors.bgTop,
+                      minimumSize: const Size.fromHeight(50),
+                      textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                    ),
+                    onPressed: () => showChallengeSheet(context),
+                    icon: const Icon(Icons.emoji_events),
+                    label: Text(tr(context, 'challengeFriend')),
+                  ),
+                ),
+                StreamBuilder<List<FriendRequest>>(
+                  stream: cloud.incomingRequests(),
+                  builder: (context, snap) {
+                    final reqs = snap.data ?? [];
+                    if (reqs.isEmpty) return const SizedBox.shrink();
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _SectionTitle(tr(context, 'requests')),
+                        ...reqs.map((r) => _RequestCard(request: r, cloud: cloud)),
+                      ],
+                    );
+                  },
+                ),
+                _SectionTitle(tr(context, 'friends')),
+                StreamBuilder<List<RankEntry>>(
+                  stream: cloud.friendsStream(),
+                  builder: (context, snap) {
+                    if (!snap.hasData) {
+                      return const Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+                    final friends = snap.data!;
+                    if (friends.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(tr(context, 'noFriends'), textAlign: TextAlign.center),
+                      );
+                    }
+                    return Column(
+                      children: friends
+                          .map(
+                            (f) => Card(
+                              child: ListTile(
+                                leading: Avatar(name: f.name, url: f.photoUrl),
+                                title: Text(f.name),
+                                subtitle: Text('${tr(context, 'total')}: ${fmtNum(context, f.score)}'),
+                                trailing: const Icon(Icons.chat_bubble_outline),
+                                onTap: () =>
+                                    Navigator.of(context)
+                                        .push(MaterialPageRoute(builder: (_) => ChatScreen(friend: f))),
+                                onLongPress: () => _confirmRemove(context, f),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    );
+                  },
+                ),
+              ],
+            ),
     );
   }
 
@@ -162,39 +164,75 @@ class FriendsScreen extends StatelessWidget {
     );
     if (ok == true) await CloudService.instance.removeFriend(f.uid);
   }
+}
 
-  Future<void> _addFriend(BuildContext context) async {
-    final lang = context.read<AppState>().language;
-    final messenger = ScaffoldMessenger.of(context);
-    final ctrl = TextEditingController();
-    final code = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(tr(context, 'addFriend')),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          textCapitalization: TextCapitalization.characters,
-          textAlign: TextAlign.center,
-          maxLength: 6,
-          style: const TextStyle(fontSize: 24, letterSpacing: 6, fontWeight: FontWeight.w700),
-          decoration: InputDecoration(hintText: tr(context, 'enterCode')),
+/// طلب صداقة وارد: الاسم، ورسالة المنافسة (الآية)، وقبول التحدي أو الرفض.
+class _RequestCard extends StatelessWidget {
+  const _RequestCard({required this.request, required this.cloud});
+  final FriendRequest request;
+  final CloudService cloud;
+
+  @override
+  Widget build(BuildContext context) {
+    final r = request;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Avatar(name: r.fromName),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(r.fromName, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+                      Text(
+                        tr(context, 'invitesYou'),
+                        style: const TextStyle(color: Colors.white70, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.emoji_events, color: KanzColors.gold),
+              ],
+            ),
+            if (r.message.isNotEmpty) ...[const SizedBox(height: 12), InviteMessage(text: r.message)],
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: KanzColors.switchGreen,
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: () => cloud.acceptRequest(r),
+                    icon: const Icon(Icons.check),
+                    label: Text(tr(context, 'acceptChallenge')),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white70,
+                      side: const BorderSide(color: Colors.white24),
+                    ),
+                    onPressed: () => cloud.declineRequest(r),
+                    child: Text(tr(context, 'decline')),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr(context, 'cancel'))),
-          FilledButton(onPressed: () => Navigator.pop(ctx, ctrl.text), child: Text(tr(context, 'send'))),
-        ],
       ),
     );
-    ctrl.dispose();
-    if (code == null || code.trim().isEmpty) return;
-    try {
-      final ok = await CloudService.instance.sendFriendRequest(code);
-      messenger.showSnackBar(SnackBar(content: Text(trLang(lang, ok ? 'requestSent' : 'codeNotFound'))));
-    } catch (e) {
-      debugPrint('Friend request failed: $e');
-      messenger.showSnackBar(SnackBar(content: Text(trLang(lang, 'error'))));
-    }
   }
 }
 
@@ -253,7 +291,7 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
-        child: Text(text, style: Theme.of(context).textTheme.titleMedium),
-      );
+    padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+    child: Text(text, style: Theme.of(context).textTheme.titleMedium),
+  );
 }

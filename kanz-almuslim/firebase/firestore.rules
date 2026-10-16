@@ -53,7 +53,11 @@ service cloud.firestore {
         && request.resource.data.to != request.auth.uid
         && id == request.auth.uid + '_' + request.resource.data.to
         && request.resource.data.fromName is string
-        && request.resource.data.fromName.size() <= 30;
+        && request.resource.data.fromName.size() <= 30
+        // رسالة دعوة المنافسة (آية + كلمة اختيارية).
+        && (!('message' in request.resource.data)
+            || (request.resource.data.message is string
+                && request.resource.data.message.size() <= 300));
       allow delete: if signedIn()
         && (resource.data.to == request.auth.uid || resource.data.from == request.auth.uid);
     }

@@ -70,10 +70,10 @@ const reminderPhrases = <ReminderPhrase>[
   ReminderPhrase('صلِّ على محمد', 'salli_ala_muhammad'),
 ];
 
-/// صوت التهنئة عند كل ١٠٠ تسبيحة ("ممتاز" في النسخة الأصلية).
+/// صوت التهنئة عند كل 100 تسبيحة ("ممتاز" في النسخة الأصلية).
 const celebrationSound = 'mumtaz';
 
-/// نصوص تنبيهات أوقات التسبيح المباركة (طه: ١٣٠).
+/// نصوص تنبيهات أوقات التسبيح المباركة (طه: 130).
 const blessedMorningText = {
   'ar': '﴿وَسَبِّحْ بِحَمْدِ رَبِّكَ قَبْلَ طُلُوعِ الشَّمْسِ﴾\nحان وقت التسبيح قبل الشروق',
   'en': '"And glorify the praise of your Lord before the rising of the sun"\nTime to glorify Allah before sunrise',
@@ -82,3 +82,19 @@ const blessedEveningText = {
   'ar': '﴿وَسَبِّحْ بِحَمْدِ رَبِّكَ ... وَقَبْلَ غُرُوبِهَا﴾\nحان وقت التسبيح قبل الغروب',
   'en': '"...and before its setting"\nTime to glorify Allah before sunset',
 };
+
+/// آيات دعوة المنافسة في الذكر (الأولى هي الافتراضية).
+const competitionVerses = <(String text, String ref)>[
+  ('وَفِي ذَٰلِكَ فَلْيَتَنَافَسِ الْمُتَنَافِسُونَ', 'المطففين: 26'),
+  ('فَاسْتَبِقُوا الْخَيْرَاتِ', 'البقرة: 148'),
+  ('سَابِقُوا إِلَىٰ مَغْفِرَةٍ مِّن رَّبِّكُمْ', 'الحديد: 21'),
+  ('فَاذْكُرُونِي أَذْكُرْكُمْ', 'البقرة: 152'),
+  ('وَالذَّاكِرِينَ اللَّهَ كَثِيرًا وَالذَّاكِرَاتِ أَعَدَّ اللَّهُ لَهُم مَّغْفِرَةً وَأَجْرًا عَظِيمًا', 'الأحزاب: 35'),
+];
+
+/// نص رسالة الدعوة: الآية ومرجعها، ثم كلمة المرسل إن وُجدت.
+String competitionMessage(int verse, String note) {
+  final (text, ref) = competitionVerses[verse];
+  final clean = note.trim();
+  return '﴿$text﴾ [$ref]${clean.isEmpty ? '' : '\n$clean'}';
+}

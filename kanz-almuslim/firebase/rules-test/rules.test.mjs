@@ -87,6 +87,14 @@ describe('friends and chat', () => {
     await assertFails(setDoc(doc(carol, 'friendships/alice_carol'), { members: ['carol', 'alice'], request: 'alice_carol' }));
   });
 
+  it('competition request carries a verse message, at most 300 chars', async () => {
+    const msg = '﴿وَفِي ذَٰلِكَ فَلْيَتَنَافَسِ الْمُتَنَافِسُونَ﴾ [المطففين: 26]';
+    await assertSucceeds(setDoc(doc(alice, 'friendRequests/alice_carol'), { from: 'alice', to: 'carol', fromName: 'Alice', message: msg }));
+    await assertSucceeds(getDoc(doc(carol, 'friendRequests/alice_carol')));
+    await assertFails(setDoc(doc(alice, 'friendRequests/alice_carol'), { from: 'alice', to: 'carol', fromName: 'Alice', message: 'x'.repeat(301) }));
+    await assertFails(setDoc(doc(alice, 'friendRequests/alice_carol'), { from: 'alice', to: 'carol', fromName: 'Alice', message: 42 }));
+  });
+
   it('cannot forge a request from someone else', async () => {
     await assertFails(setDoc(doc(carol, 'friendRequests/alice_bob'), { from: 'alice', to: 'bob', fromName: 'A' }));
   });

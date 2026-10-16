@@ -31,7 +31,14 @@ class DemoCloud {
   ];
 
   final _friends = <String>{'u2', 'u5', 'u9'};
-  final _requests = <FriendRequest>[const FriendRequest(id: 'r1', fromUid: 'u4', fromName: 'نور')];
+  final _requests = <FriendRequest>[
+    const FriendRequest(
+      id: 'r1',
+      fromUid: 'u4',
+      fromName: 'نور',
+      message: '﴿وَفِي ذَٰلِكَ فَلْيَتَنَافَسِ الْمُتَنَافِسُونَ﴾ [المطففين: 26]\nمين بيوصل 1000 تسبيحة اليوم أول؟',
+    ),
+  ];
   final _friendsCtrl = StreamController<List<RankEntry>>.broadcast();
   final _requestsCtrl = StreamController<List<FriendRequest>>.broadcast();
   final _chats = <String, List<ChatMessage>>{};

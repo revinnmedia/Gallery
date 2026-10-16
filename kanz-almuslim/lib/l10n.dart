@@ -136,6 +136,22 @@ const _strings = <String, Map<String, String>>{
   // الأصدقاء
   'myCode': {'ar': 'رمزك للأصدقاء', 'en': 'Your friend code'},
   'addFriend': {'ar': 'اضافه صديق', 'en': 'Add friend'},
+  'challengeFriend': {'ar': 'طلب صداقة منافسة', 'en': 'Competition friend request'},
+  'challengeHint': {
+    'ar': 'ادعُ صديقك لتتنافسا في ذكر الله',
+    'en': 'Invite your friend to compete in remembering Allah',
+  },
+  'chooseVerse': {'ar': 'اختر آية لرسالتك', 'en': 'Choose a verse for your message'},
+  'addNote': {'ar': 'أضف كلمة (اختياري)', 'en': 'Add a note (optional)'},
+  'messagePreview': {'ar': 'رسالتك', 'en': 'Your message'},
+  'sendChallenge': {'ar': 'إرسال الطلب', 'en': 'Send request'},
+  'shareInvite': {'ar': 'مشاركة الدعوة', 'en': 'Share invitation'},
+  'shareInviteText': {
+    'ar': 'أدعوك لمنافستي في ذكر الله على تطبيق كنز المسلم\n\n{msg}\n\nأضفني برمز الصداقة: {code}',
+    'en': 'I invite you to compete with me in remembering Allah on Kanz Al Muslim\n\n{msg}\n\nAdd me with my friend code: {code}',
+  },
+  'invitesYou': {'ar': 'يدعوك للمنافسة في ذكر الله', 'en': 'invites you to compete in dhikr'},
+  'acceptChallenge': {'ar': 'قبول التحدي', 'en': 'Accept challenge'},
   'enterCode': {'ar': 'اكتب رمز صديقك', 'en': "Enter your friend's code"},
   'send': {'ar': 'ارسال', 'en': 'Send'},
   'requestSent': {'ar': 'تم ارسال الطلب', 'en': 'Request sent'},
