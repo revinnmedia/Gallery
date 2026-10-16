@@ -301,7 +301,8 @@ class _TasbeehScreenState extends State<TasbeehScreen> with TickerProviderStateM
                           ),
                           const SizedBox(height: 6),
                           SizedBox(
-                            height: 150,
+                            // الأصابع تأخذ مساحة مريحة تتناسب مع طول الشاشة.
+                            height: (MediaQuery.sizeOf(context).height * 0.24).clamp(150.0, 215.0),
                             child: FingersRow(
                               controller: _fingers,
                               onSwipe: () => _count(fly: true),
