@@ -243,73 +243,18 @@ class _BeadsIconPainter extends CustomPainter {
   bool shouldRepaint(_BeadsIconPainter old) => old.color != color;
 }
 
-/// شعار كنز المسلم (المكعب). رسم تقريبي للشعار الأصلي.
+/// شعار كنز المسلم الأصلي (مستخرج من أيقونة التطبيق).
 class KanzLogo extends StatelessWidget {
-  const KanzLogo({super.key, this.size = 90, this.color = Colors.white, this.hole = KanzColors.bgTop});
+  const KanzLogo({super.key, this.size = 90});
   final double size;
-  final Color color;
-  final Color hole;
 
   @override
-  Widget build(BuildContext context) =>
-      CustomPaint(size: Size.square(size), painter: _LogoPainter(color, hole));
-}
-
-class _LogoPainter extends CustomPainter {
-  _LogoPainter(this.color, this.hole);
-  final Color color;
-  final Color hole;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final s = size.width / 100;
-    Offset p(double x, double y) => Offset(x * s, y * s);
-    Path poly(List<Offset> pts) => Path()..addPolygon(pts, true);
-
-    final white = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-    final round = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 10 * s
-      ..strokeJoin = StrokeJoin.round;
-    final dark = Paint()..color = hole;
-    final darkRound = Paint()
-      ..color = hole
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4 * s
-      ..strokeJoin = StrokeJoin.round;
-
-    // المسدس الخارجي بزوايا مدوّرة.
-    final hex = poly([p(50, 6), p(89, 28), p(89, 72), p(50, 94), p(11, 72), p(11, 28)]);
-    canvas.drawPath(hex, white);
-    canvas.drawPath(hex, round);
-
-    // غطاء المكعب.
-    final lid = poly([p(50, 17), p(73, 30), p(50, 43), p(27, 30)]);
-    canvas.drawPath(lid, dark);
-    canvas.drawPath(lid, darkRound);
-
-    // الوجه الأيسر والأيمن.
-    final left = poly([p(19, 38), p(44, 52), p(44, 83), p(19, 69)]);
-    final right = poly([p(81, 38), p(56, 52), p(56, 83), p(81, 69)]);
-    for (final f in [left, right]) {
-      canvas.drawPath(f, dark);
-      canvas.drawPath(f, darkRound);
-    }
-
-    // الفتحة الصغيرة في الوجه الأيسر.
-    final slot = RRect.fromRectAndRadius(Rect.fromLTWH(26 * s, 52 * s, 6 * s, 16 * s), Radius.circular(3 * s));
-    canvas.drawRRect(slot, white);
-
-    // العمود في الوجه الأيمن.
-    final stem = RRect.fromRectAndRadius(Rect.fromLTWH(66 * s, 50 * s, 6 * s, 24 * s), Radius.circular(3 * s));
-    canvas.drawRRect(stem, white);
-  }
-
-  @override
-  bool shouldRepaint(_LogoPainter old) => old.color != color || old.hole != hole;
+  Widget build(BuildContext context) => Image.asset(
+        'assets/images/logo_white.png',
+        width: size,
+        height: size,
+        filterQuality: FilterQuality.medium,
+      );
 }
 
 /// صف جدول بالشكل الأصلي (رأس السجل).

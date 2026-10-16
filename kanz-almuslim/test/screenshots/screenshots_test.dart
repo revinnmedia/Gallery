@@ -51,8 +51,11 @@ Future<AppState> _state({String lang = 'ar'}) async {
   return s;
 }
 
+/// مقاس صور App Store لشاشة 6.9 إنش (يمكن تغييره بـ --dart-define=STORE=true).
+const _store = bool.fromEnvironment('STORE');
+
 Future<void> _pump(WidgetTester t, AppState s) async {
-  t.view.physicalSize = const Size(1179, 2556);
+  t.view.physicalSize = _store ? const Size(1290, 2796) : const Size(1179, 2556);
   t.view.devicePixelRatio = 3;
   await t.pumpWidget(MultiProvider(
     providers: [
@@ -79,7 +82,7 @@ void main() {
   });
 
   Future<void> shot(WidgetTester t, String name) =>
-      expectLater(find.byType(MaterialApp), matchesGoldenFile('out/$name.png'));
+      expectLater(find.byType(MaterialApp), matchesGoldenFile(_store ? 'store/$name.png' : 'out/$name.png'));
 
   testWidgets('01 tasbeeh', (t) async {
     await _pump(t, await _state());

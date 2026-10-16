@@ -51,7 +51,7 @@ class SupportScreen extends StatelessWidget {
                     padding: EdgeInsets.zero,
                     children: [
                       const SizedBox(height: 40),
-                      const Center(child: KanzLogo(size: 92, hole: Color(0xFF07385A))),
+                      const Center(child: KanzLogo(size: 92)),
                       const SizedBox(height: 8),
                       const Text('كنز المسلم',
                           textAlign: TextAlign.center,

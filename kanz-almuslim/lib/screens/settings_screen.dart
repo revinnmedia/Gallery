@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../l10n.dart';
 import '../services/cloud_service.dart';
+import '../services/games_service.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/kanz_ui.dart';
@@ -69,7 +70,7 @@ class SettingsScreen extends StatelessWidget {
             onTap: () => SharePlus.instance.share(ShareParams(text: tr(context, 'shareText'))),
           ),
           KanzRow(
-            icon: const KanzLogo(size: 38, hole: Color(0xFF09425F)),
+            icon: const KanzLogo(size: 38),
             title: tr(context, 'about'),
             onTap: () => _push(context, const AboutScreen()),
           ),
@@ -102,12 +103,20 @@ class SettingsScreen extends StatelessWidget {
               subtitle: cloud.signedIn ? cloud.displayName : tr(context, 'tapToSignIn'),
               onTap: () => cloud.signedIn ? _push(context, const AccountScreen()) : showSignInSheet(context),
             ),
-          if (cloud.available)
-            KanzRow(
-              icon: const Icon(Icons.emoji_events_outlined, color: iconColor, size: 40),
-              title: tr(context, 'ranking'),
-              onTap: () => cloud.signedIn ? _push(context, const RankingScreen()) : showSignInSheet(context),
-            ),
+          KanzRow(
+            icon: const Icon(Icons.emoji_events_outlined, color: iconColor, size: 40),
+            title: tr(context, 'ranking'),
+            onTap: () {
+              // بدون سيرفر: لوحة Game Center / Play Games.
+              if (!cloud.available) {
+                GamesService.instance.showLeaderboard();
+              } else if (cloud.signedIn) {
+                _push(context, const RankingScreen());
+              } else {
+                showSignInSheet(context);
+              }
+            },
+          ),
           if (cloud.available)
             KanzRow(
               icon: const Icon(Icons.people_outline, color: iconColor, size: 40),

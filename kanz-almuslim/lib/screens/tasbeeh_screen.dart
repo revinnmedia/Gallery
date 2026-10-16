@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../l10n.dart';
 import '../services/cloud_service.dart';
+import '../services/games_service.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/bead_ring.dart';
@@ -131,7 +132,11 @@ class _UserCard extends StatelessWidget {
     final sub = s.premium ? tr(context, 'premiumMember') : tr(context, 'normalMember');
     return GestureDetector(
       onTap: () {
-        if (!cloud.available) return;
+        // بدون سيرفر: لوحة Game Center / Play Games مباشرة.
+        if (!cloud.available) {
+          GamesService.instance.showLeaderboard();
+          return;
+        }
         if (cloud.signedIn) {
           Navigator.of(context).push(MaterialPageRoute(builder: (_) => const RankingScreen()));
         } else {

@@ -14,7 +14,7 @@ class AboutScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 40),
         children: [
-          const Center(child: KanzLogo(size: 92, hole: Color(0xFF07385A))),
+          const Center(child: KanzLogo(size: 92)),
           const SizedBox(height: 8),
           const Text('كنز المسلم',
               textAlign: TextAlign.center,
