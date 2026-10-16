@@ -56,6 +56,14 @@ class _FingersRowState extends State<FingersRow> with TickerProviderStateMixin {
   late final List<double> _drag;
   late final List<GlobalKey> _keys;
 
+  /// الأصابع التي انطلقت (تطير أو اختفت) ومكانها لحظة الانطلاق.
+  late final List<bool> _launched;
+  late final List<int> _launchSlot;
+
+  /// عند عودة الأصابع تأخذ أماكنها فوراً بلا انزلاق.
+  bool _instant = false;
+  static const _slide = Duration(milliseconds: 220);
+
   @override
   void initState() {
     super.initState();
@@ -67,6 +75,8 @@ class _FingersRowState extends State<FingersRow> with TickerProviderStateMixin {
     );
     _drag = List.filled(widget.count, 0);
     _keys = List.generate(widget.count, (_) => GlobalKey());
+    _launched = List.filled(widget.count, false);
+    _launchSlot = List.filled(widget.count, 0);
   }
 
   @override
@@ -107,7 +117,21 @@ class _FingersRowState extends State<FingersRow> with TickerProviderStateMixin {
     return true;
   }
 
+  /// مكان الإصبع من اليمين: الأصابع الباقية تتزحلق لليمين لتملأ الفراغ.
+  int _slot(int i) {
+    if (_launched[i]) return _launchSlot[i];
+    var k = 0;
+    for (var j = 0; j < i; j++) {
+      if (!_launched[j]) k++;
+    }
+    return k;
+  }
+
   Future<void> _animate(int i, int payload) async {
+    setState(() {
+      _launchSlot[i] = _slot(i);
+      _launched[i] = true;
+    });
     await _fly[i].forward(from: 0);
     if (!mounted) return;
     final box = _keys[i].currentContext?.findRenderObject() as RenderBox?;
@@ -124,11 +148,17 @@ class _FingersRowState extends State<FingersRow> with TickerProviderStateMixin {
 
   /// تعود الأصابع الخمسة معاً من الأسفل، بتتابع خفيف من اليمين.
   Future<void> _regrowAll() async {
-    for (var j = 0; j < widget.count; j++) {
-      _grow[j].value = 0;
-      _fly[j].value = 0;
-    }
+    setState(() {
+      _instant = true;
+      for (var j = 0; j < widget.count; j++) {
+        _grow[j].value = 0;
+        _fly[j].value = 0;
+        _launched[j] = false;
+      }
+    });
     await Future<void>.delayed(const Duration(milliseconds: 120));
+    if (!mounted) return;
+    setState(() => _instant = false);
     for (var j = 0; j < widget.count; j++) {
       if (!mounted) return;
       _grow[j].forward(from: 0);
@@ -138,18 +168,21 @@ class _FingersRowState extends State<FingersRow> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, c) {
-      const gap = 8.0;
-      final w = (c.maxWidth - gap * (widget.count + 1)) / widget.count;
-      final h = c.maxHeight;
-      // الإصبع الأول (الأكثر إضاءة) على اليمين، والإطلاق يسير نحو اليسار.
-      return Directionality(
-        textDirection: TextDirection.rtl,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
+    return LayoutBuilder(
+      builder: (context, c) {
+        const gap = 8.0;
+        final w = (c.maxWidth - gap * (widget.count + 1)) / widget.count;
+        final h = c.maxHeight;
+        // الإصبع التالي (الأكثر إضاءة) دائماً على اليمين، والباقي يتزحلق إليه.
+        return Stack(
+          clipBehavior: Clip.none,
           children: List.generate(widget.count, (i) {
-            return Padding(
-              padding: EdgeInsetsDirectional.only(start: gap, end: i == widget.count - 1 ? gap : 0),
+            final slot = _slot(i);
+            return AnimatedPositioned(
+              duration: _instant ? Duration.zero : _slide,
+              curve: Curves.easeOutCubic,
+              right: gap + slot * (w + gap),
+              bottom: 0,
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onVerticalDragUpdate: (d) {
@@ -176,16 +209,16 @@ class _FingersRowState extends State<FingersRow> with TickerProviderStateMixin {
                       fly: _fly[i].value,
                       grow: _grow[i].value,
                       drag: _drag[i],
-                      lead: i == 0,
+                      lead: !_launched[i] && slot == 0,
                     ),
                   ),
                 ),
               ),
             );
           }),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 }
 
@@ -285,11 +318,7 @@ class _Finger extends StatelessWidget {
           top: Radius.circular(width / 2),
           bottom: Radius.circular(width / 2 * morph),
         ),
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [c1, c2],
-        ),
+        gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [c1, c2]),
         boxShadow: [
           if (glow > 0)
             BoxShadow(

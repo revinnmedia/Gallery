@@ -4,6 +4,11 @@ import 'package:kanz_almuslim/widgets/fingers_row.dart';
 
 void main() {
   int visible(WidgetTester t) => find.byIcon(Icons.keyboard_arrow_up).evaluate().length;
+  double rightmost(WidgetTester t) => find
+      .byIcon(Icons.keyboard_arrow_up)
+      .evaluate()
+      .map((e) => t.getCenter(find.byWidget(e.widget)).dx)
+      .reduce((a, b) => a > b ? a : b);
 
   testWidgets('fingers turn into dots one by one and return only after the last', (t) async {
     final c = FingersController();
@@ -28,10 +33,13 @@ void main() {
       ),
     ));
     expect(visible(t), 5);
+    final right = rightmost(t);
     for (var n = 1; n <= 4; n++) {
       expect(c.launch(n), isTrue);
       await t.pumpAndSettle();
       expect(visible(t), 5 - n, reason: 'after $n taps');
+      // الأصابع الباقية تزحلقت لليمين: دائماً يوجد إصبع في أقصى اليمين.
+      expect(rightmost(t), closeTo(right, 0.5), reason: 'slide after $n taps');
     }
     expect(morphed, [1, 2, 3, 4]);
     c.launch(5);
