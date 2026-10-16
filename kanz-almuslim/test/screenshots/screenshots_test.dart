@@ -24,12 +24,12 @@ Future<void> _loadFont(String family, List<String> paths) async {
   await loader.load();
 }
 
-Future<AppState> _state({String lang = 'ar'}) async {
+Future<AppState> _state({String lang = 'ar', int cycle = 21}) async {
   SharedPreferences.setMockInitialValues({
     'soundOn': false,
     'language': lang,
     'total': 3934,
-    'cycles': '{"d1": 21}',
+    'cycles': '{"d1": $cycle}',
     'autoReminder': true,
     'autoInterval': 5,
     'customReminderOn': true,
@@ -142,9 +142,27 @@ void main() {
     await t.tapAt(const Offset(196, 450));
     var ms = 0;
     for (final at in [120, 260, 380, 520, 700, 900, 1450]) {
-      await t.pump(Duration(milliseconds: at - ms));
-      ms = at;
+      while (ms < at) {
+        await t.pump(const Duration(milliseconds: 16));
+        ms += 16;
+      }
       await expectLater(find.byType(MaterialApp), matchesGoldenFile('motion/m_${at.toString().padLeft(4, '0')}.png'));
+    }
+    await t.pumpAndSettle();
+  });
+
+  // لقطات نهاية الدورة: اهتزاز ثم صعود الحبات (للمراجعة فقط).
+  testWidgets('09 cycle end frames', (t) async {
+    if (_store) return;
+    await _pump(t, await _state(cycle: 32));
+    await t.tapAt(const Offset(196, 450));
+    var ms = 0;
+    for (final at in [1150, 1350, 1500, 1650, 1800, 2000, 2400]) {
+      while (ms < at) {
+        await t.pump(const Duration(milliseconds: 16));
+        ms += 16;
+      }
+      await expectLater(find.byType(MaterialApp), matchesGoldenFile('motion/c_${at.toString().padLeft(4, '0')}.png'));
     }
     await t.pumpAndSettle();
   });

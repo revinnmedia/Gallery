@@ -19,7 +19,7 @@ class TasbeehScreen extends StatefulWidget {
   State<TasbeehScreen> createState() => _TasbeehScreenState();
 }
 
-class _TasbeehScreenState extends State<TasbeehScreen> with SingleTickerProviderStateMixin {
+class _TasbeehScreenState extends State<TasbeehScreen> with TickerProviderStateMixin {
   late final PageController _pages;
   late final AnimationController _pulse;
   bool _celebrating = false;
@@ -30,18 +30,32 @@ class _TasbeehScreenState extends State<TasbeehScreen> with SingleTickerProvider
   /// حبات أُضيئت لكن نقطتها ما زالت في الطريق إليها.
   final List<int> _incoming = [];
 
+  /// نهاية الدورة: اهتزاز الشاشة، ثم تصعد الحبات وتختفي ويبدأ عدّ جديد.
+  late final AnimationController _shake;
+  late final AnimationController _scatter;
+
+  /// اكتملت الدورة وننتظر وصول نقطة الحبة الأخيرة لنبدأ.
+  bool _clearOnArrive = false;
+
+  /// اختفت الحبات: نعرض صفراً حتى التسبيحة التالية.
+  bool _fresh = false;
+
   @override
   void initState() {
     super.initState();
     final state = context.read<AppState>();
     _pages = PageController(initialPage: state.currentIndex);
     _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 140));
+    _shake = AnimationController(vsync: this, duration: const Duration(milliseconds: 420));
+    _scatter = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
   }
 
   @override
   void dispose() {
     _pages.dispose();
     _pulse.dispose();
+    _shake.dispose();
+    _scatter.dispose();
     super.dispose();
   }
 
@@ -66,11 +80,24 @@ class _TasbeehScreenState extends State<TasbeehScreen> with SingleTickerProvider
   int _count({bool fly = false}) {
     if (_celebrating) return -1;
     final state = context.read<AppState>();
+    // لمسة أثناء صعود الحبات: نُنهي الحركة فوراً ونبدأ الدورة الجديدة.
+    if (_fresh || _scatter.isAnimating || _clearOnArrive) {
+      _scatter.value = 0;
+      _clearOnArrive = false;
+      _fresh = false;
+    }
     final before = _litFor(state);
     final result = state.tap();
     final after = _litFor(state);
     _pulse.forward(from: 0);
     if (result.hundred) _celebrate();
+    if (result.cycleDone) {
+      if (fly) {
+        _clearOnArrive = true;
+      } else {
+        _cycleComplete();
+      }
+    }
     if (after <= 0) return -1;
     final bead = after - 1;
     if (fly && after != before) setState(() => _incoming.add(bead));
@@ -100,12 +127,27 @@ class _TasbeehScreenState extends State<TasbeehScreen> with SingleTickerProvider
   }
 
   void _arrived(int bead) {
-    if (mounted && _incoming.remove(bead)) setState(() {});
+    if (!mounted) return;
+    if (_incoming.remove(bead)) setState(() {});
+    if (_clearOnArrive && bead == 32) {
+      _clearOnArrive = false;
+      _cycleComplete();
+    }
+  }
+
+  /// اكتملت الدورة: ترتجّ الشاشة، وتصعد الحبات بتتابع سريع وتختفي.
+  Future<void> _cycleComplete() async {
+    _shake.forward(from: 0);
+    await _scatter.forward(from: 0);
+    if (mounted && _scatter.value == 1) setState(() => _fresh = true);
   }
 
   /// عند التصفير أو تغيير الذكر تُلغى النقاط الطائرة.
   void _clearFlights() {
     _orbit.currentState?.clear();
+    _scatter.value = 0;
+    _clearOnArrive = false;
+    _fresh = false;
     setState(_incoming.clear);
   }
 
@@ -124,8 +166,8 @@ class _TasbeehScreenState extends State<TasbeehScreen> with SingleTickerProvider
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final d = state.current;
-    final cycle = state.displayCount;
-    final lit = _litFor(state);
+    final cycle = _fresh ? 0 : state.displayCount;
+    final lit = _fresh ? 0 : _litFor(state);
 
     // نحافظ على تزامن الصفحة إذا تغيّر الذكر من شاشة الإدارة.
     if (_pages.hasClients && _pages.page?.round() != state.currentIndex) {
@@ -137,118 +179,127 @@ class _TasbeehScreenState extends State<TasbeehScreen> with SingleTickerProvider
     return PatternBackground(
       child: Stack(
         children: [
-          SafeArea(
-            child: Column(
-              children: [
-                _TopBar(
-                  today: state.todayTotal,
-                  total: state.total,
-                  soundOn: state.soundOn,
-                  onSound: () => state.setSound(!state.soundOn),
-                  onReset: state.currentCycle == 0
-                      ? null
-                      : () {
-                          _clearFlights();
-                          state.resetCycle();
-                        },
-                  onManage: () =>
-                      Navigator.of(context)
-                          .push(MaterialPageRoute(builder: (_) => const ManageDhikrScreen())),
-                ),
-                Expanded(
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: _onTap,
-                    child: Column(
-                      children: [
-                        SizedBox(
-                          height: 78,
-                          child: PageView.builder(
-                            controller: _pages,
-                            itemCount: state.dhikrs.length,
-                            onPageChanged: (i) {
-                              _clearFlights();
-                              state.selectDhikr(i);
-                            },
-                            itemBuilder: (_, i) => Center(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 32),
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    state.dhikrs[i].text,
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      fontSize: 36,
-                                      height: 1.5,
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w500,
+          AnimatedBuilder(
+            animation: _shake,
+            builder: (context, child) {
+              final t = _shake.value;
+              final dx = t == 0 || t == 1 ? 0.0 : sin(t * pi * 7) * 9 * (1 - t);
+              return Transform.translate(offset: Offset(dx, 0), child: child);
+            },
+            child: SafeArea(
+              child: Column(
+                children: [
+                  _TopBar(
+                    today: state.todayTotal,
+                    total: state.total,
+                    soundOn: state.soundOn,
+                    onSound: () => state.setSound(!state.soundOn),
+                    onReset: state.currentCycle == 0
+                        ? null
+                        : () {
+                            _clearFlights();
+                            state.resetCycle();
+                          },
+                    onManage: () =>
+                        Navigator.of(context)
+                            .push(MaterialPageRoute(builder: (_) => const ManageDhikrScreen())),
+                  ),
+                  Expanded(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: _onTap,
+                      child: Column(
+                        children: [
+                          SizedBox(
+                            height: 78,
+                            child: PageView.builder(
+                              controller: _pages,
+                              itemCount: state.dhikrs.length,
+                              onPageChanged: (i) {
+                                _clearFlights();
+                                state.selectDhikr(i);
+                              },
+                              itemBuilder: (_, i) => Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      state.dhikrs[i].text,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontSize: 36,
+                                        height: 1.5,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                        _Dots(count: state.dhikrs.length, index: state.currentIndex),
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(24, 10, 24, 6),
-                            child: ScaleTransition(
-                              scale: Tween(begin: 1.0, end: 0.97).animate(
-                                CurvedAnimation(
-                                  parent: _pulse,
-                                  curve: Curves.easeOut,
-                                  reverseCurve: Curves.easeIn,
+                          _Dots(count: state.dhikrs.length, index: state.currentIndex),
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(24, 10, 24, 6),
+                              child: ScaleTransition(
+                                scale: Tween(begin: 1.0, end: 0.97).animate(
+                                  CurvedAnimation(
+                                    parent: _pulse,
+                                    curve: Curves.easeOut,
+                                    reverseCurve: Curves.easeIn,
+                                  ),
                                 ),
-                              ),
-                              child: BeadRing(
-                                key: _ring,
-                                lit: lit,
-                                hidden: _incoming.toSet(),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      fmtNum(context, cycle),
-                                      style: const TextStyle(
-                                        fontSize: 64,
-                                        fontWeight: FontWeight.w300,
-                                        color: Colors.white,
-                                        height: 1.1,
+                                child: BeadRing(
+                                  key: _ring,
+                                  lit: lit,
+                                  hidden: _incoming.toSet(),
+                                  scatter: _scatter,
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        fmtNum(context, cycle),
+                                        style: const TextStyle(
+                                          fontSize: 64,
+                                          fontWeight: FontWeight.w300,
+                                          color: Colors.white,
+                                          height: 1.1,
+                                        ),
                                       ),
-                                    ),
-                                    Text(
-                                      '/ ${fmtNum(context, d.target)}',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.white.withValues(alpha: 0.7),
+                                      Text(
+                                        '/ ${fmtNum(context, d.target)}',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.white.withValues(alpha: 0.7),
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                        Text(
-                          tr(context, 'tapToCount'),
-                          style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 13),
-                        ),
-                        const SizedBox(height: 10),
-                        SizedBox(
-                          height: 150,
-                          child: FingersRow(
-                            controller: _fingers,
-                            onSwipe: () => _count(fly: true),
-                            onMorphed: _onMorphed,
+                          Text(
+                            tr(context, 'tapToCount'),
+                            style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 13),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 10),
+                          SizedBox(
+                            height: 150,
+                            child: FingersRow(
+                              controller: _fingers,
+                              onSwipe: () => _count(fly: true),
+                              onMorphed: _onMorphed,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           Positioned.fill(child: OrbitLayer(key: _orbit)),
