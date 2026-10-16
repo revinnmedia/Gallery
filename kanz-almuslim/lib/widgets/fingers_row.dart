@@ -176,46 +176,58 @@ class _FingersRowState extends State<FingersRow> with TickerProviderStateMixin {
         // الإصبع التالي (الأكثر إضاءة) دائماً على اليمين، والباقي يتزحلق إليه.
         return Stack(
           clipBehavior: Clip.none,
-          children: List.generate(widget.count, (i) {
-            final slot = _slot(i);
-            return AnimatedPositioned(
-              duration: _instant ? Duration.zero : _slide,
-              curve: Curves.easeOutCubic,
-              right: gap + slot * (w + gap),
-              bottom: 0,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onVerticalDragUpdate: (d) {
-                  if (!_ready(i)) return;
-                  setState(() => _drag[i] = (_drag[i] + d.delta.dy).clamp(-h * 0.6, 0));
-                },
-                onVerticalDragEnd: (d) {
-                  final v = d.primaryVelocity ?? 0;
-                  if (_ready(i) && (_drag[i] < -24 || v < -220)) {
-                    _animate(i, widget.onSwipe());
-                  } else {
-                    setState(() => _drag[i] = 0);
-                  }
-                },
-                child: SizedBox(
-                  key: _keys[i],
-                  width: w,
-                  height: h,
-                  child: AnimatedBuilder(
-                    animation: Listenable.merge([_fly[i], _grow[i]]),
-                    builder: (context, _) => _FingerFrame(
-                      width: w,
-                      height: h,
-                      fly: _fly[i].value,
-                      grow: _grow[i].value,
-                      drag: _drag[i],
-                      lead: !_launched[i] && slot == 0,
+          // الإصبع المنطلق يُرسم فوق الباقي حتى لا يغطيه الإصبع الذي يتزحلق مكانه.
+          children: [
+            for (final i in [
+              for (var j = 0; j < widget.count; j++)
+                if (!_launched[j]) j,
+              for (var j = 0; j < widget.count; j++)
+                if (_launched[j]) j,
+            ])
+              Builder(
+                builder: (context) {
+                  final slot = _slot(i);
+                  return AnimatedPositioned(
+                    key: ValueKey(i),
+                    duration: _instant ? Duration.zero : _slide,
+                    curve: Curves.easeOutCubic,
+                    right: gap + slot * (w + gap),
+                    bottom: 0,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onVerticalDragUpdate: (d) {
+                        if (!_ready(i)) return;
+                        setState(() => _drag[i] = (_drag[i] + d.delta.dy).clamp(-h * 0.6, 0));
+                      },
+                      onVerticalDragEnd: (d) {
+                        final v = d.primaryVelocity ?? 0;
+                        if (_ready(i) && (_drag[i] < -24 || v < -220)) {
+                          _animate(i, widget.onSwipe());
+                        } else {
+                          setState(() => _drag[i] = 0);
+                        }
+                      },
+                      child: SizedBox(
+                        key: _keys[i],
+                        width: w,
+                        height: h,
+                        child: AnimatedBuilder(
+                          animation: Listenable.merge([_fly[i], _grow[i]]),
+                          builder: (context, _) => _FingerFrame(
+                            width: w,
+                            height: h,
+                            fly: _fly[i].value,
+                            grow: _grow[i].value,
+                            drag: _drag[i],
+                            lead: slot == 0,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
+                  );
+                },
               ),
-            );
-          }),
+          ],
         );
       },
     );

@@ -210,12 +210,11 @@ class _TasbeehScreenState extends State<TasbeehScreen> with TickerProviderStateM
                         children: [
                           Expanded(
                             child: Padding(
-                              padding: const EdgeInsets.fromLTRB(2, 6, 2, 0),
-                              child: Row(
+                              padding: const EdgeInsets.fromLTRB(2, 10, 2, 6),
+                              child: Stack(
                                 children: [
-                                  // في العربية: السهم الأيمن للسابق، والأيسر للتالي.
-                                  _Arrow(right: true, onTap: () => _step(state, -1)),
-                                  Expanded(
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 22),
                                     child: GestureDetector(
                                       onHorizontalDragEnd: (e) {
                                         final v = e.primaryVelocity ?? 0;
@@ -284,16 +283,25 @@ class _TasbeehScreenState extends State<TasbeehScreen> with TickerProviderStateM
                                       ),
                                     ),
                                   ),
-                                  _Arrow(right: false, onTap: () => _step(state, 1)),
                                 ],
                               ),
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          _Dots(count: state.dhikrs.length, index: state.currentIndex),
-                          const SizedBox(height: 14),
+                          // أسهم تبديل الذكر حول النقاط (في العربية: الأيمن للسابق).
+                          Row(
+                            children: [
+                              const SizedBox(width: 12),
+                              _Arrow(right: true, onTap: () => _step(state, -1)),
+                              Expanded(
+                                child: _Dots(count: state.dhikrs.length, index: state.currentIndex),
+                              ),
+                              _Arrow(right: false, onTap: () => _step(state, 1)),
+                              const SizedBox(width: 12),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
                           SizedBox(
-                            height: 170,
+                            height: 150,
                             child: FingersRow(
                               controller: _fingers,
                               onSwipe: () => _count(fly: true),
@@ -447,11 +455,11 @@ class _Arrow extends StatelessWidget {
     return IconButton(
       onPressed: onTap,
       padding: EdgeInsets.zero,
-      constraints: const BoxConstraints(minWidth: 36, minHeight: 64),
+      constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
       // الاتجاه ثابت مهما كانت لغة الواجهة.
       icon: Directionality(
         textDirection: TextDirection.ltr,
-        child: Icon(right ? Icons.chevron_right : Icons.chevron_left, color: Colors.white, size: 40),
+        child: Icon(right ? Icons.chevron_right : Icons.chevron_left, color: Colors.white, size: 32),
       ),
     );
   }
