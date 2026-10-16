@@ -92,6 +92,8 @@ class NotificationService {
 
   /// يطلب إذن التنبيهات. يرجع true إذا وافق المستخدم.
   Future<bool> requestPermission() async {
+    // في معاينة المتصفح لا توجد تنبيهات للجهاز: نسمح بتجربة الإعدادات فقط.
+    if (kIsWeb) return true;
     await init();
     if (isIOS) {
       final ios = _plugin
@@ -117,6 +119,7 @@ class NotificationService {
 
   /// يلغي كل شيء ويعيد الجدولة من الصفر.
   Future<void> rescheduleAll(ReminderSettings s) async {
+    if (kIsWeb) return;
     await init();
     await _plugin.cancelAll();
     if (s.streams.isEmpty) return;
@@ -246,6 +249,7 @@ class NotificationService {
   }
 
   Future<void> cancelAll() async {
+    if (kIsWeb) return;
     await init();
     await _plugin.cancelAll();
   }

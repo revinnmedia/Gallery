@@ -32,6 +32,10 @@ const _strings = <String, Map<String, String>>{
   'editAdhkar': {'ar': 'تحرير الاذكار', 'en': 'Edit adhkar'},
   'done': {'ar': 'تم', 'en': 'Done'},
   'every': {'ar': 'كل', 'en': 'Every'},
+  'notifWebOnly': {
+    'ar': 'هذه معاينة: التنبيهات الفعلية تعمل على الجوال',
+    'en': 'Preview only: real notifications work on the phone',
+  },
   'notifPermissionDenied': {
     'ar': 'الاشعارات مقفله. فعّلها من اعدادات الجهاز',
     'en': 'Notifications are off. Enable them in device settings.',

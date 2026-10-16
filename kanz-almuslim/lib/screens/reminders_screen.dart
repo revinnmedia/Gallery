@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -17,6 +18,10 @@ class RemindersScreen extends StatelessWidget {
   static Future<bool> _ensurePermission(BuildContext context) async {
     final lang = context.read<AppState>().language;
     final messenger = ScaffoldMessenger.of(context);
+    if (kIsWeb) {
+      messenger.showSnackBar(SnackBar(content: Text(trLang(lang, 'notifWebOnly'))));
+      return true;
+    }
     final ok = await NotificationService.instance.requestPermission();
     if (!ok) {
       messenger.showSnackBar(SnackBar(content: Text(trLang(lang, 'notifPermissionDenied'))));
