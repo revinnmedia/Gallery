@@ -23,6 +23,7 @@ Future<void> main() async {
   } catch (e) {
     debugPrint('Notifications unavailable: $e');
   }
+  CloudService.instance.localTotal = () => state.total;
   await CloudService.instance.init();
 
   // نعيد بناء جدول التنبيهات عند كل فتح، بعد إلغاء القديم بالكامل.

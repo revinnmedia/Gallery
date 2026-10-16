@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../l10n.dart';
 import '../models.dart';
 import '../services/cloud_service.dart';
+import '../services/demo_cloud.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/avatar.dart';
@@ -20,6 +21,7 @@ class FriendsScreen extends StatelessWidget {
     final cloud = context.watch<CloudService>();
     return Scaffold(
       appBar: AppBar(
+        bottom: demoNoteBar(cloud, context.read<AppState>().language),
         title: Text(tr(context, 'tabFriends')),
         actions: [
           if (cloud.signedIn)

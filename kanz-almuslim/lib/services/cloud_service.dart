@@ -11,15 +11,12 @@ import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../models.dart';
+import 'demo_cloud.dart';
 
 enum RankPeriod { day, week, month, all }
 
 class FriendRequest {
-  const FriendRequest({
-    required this.id,
-    required this.fromUid,
-    required this.fromName,
-  });
+  const FriendRequest({required this.id, required this.fromUid, required this.fromName});
   final String id;
   final String fromUid;
   final String fromName;
@@ -52,14 +49,26 @@ class CloudService extends ChangeNotifier {
   Timer? _flushTimer;
   StreamSubscription<User?>? _authSub;
 
-  bool get signedIn => available && user != null;
-  String get displayName =>
-      (profile?['name'] as String?) ?? user?.displayName ?? '';
-  String? get friendCode => profile?['code'] as String?;
+  /// معاينة المتصفح: بيانات وهمية لعرض شكل الترتيب والأصدقاء (لا تعمل على الجوال).
+  DemoCloud? demo;
+
+  /// مجموع تسبيحات المستخدم المحلي (للمعاينة فقط).
+  int Function() localTotal = () => 0;
+
+  bool get signedIn => demo != null ? demo!.signedIn : available && user != null;
+  String? get uid => demo != null ? DemoCloud.myUid : user?.uid;
+  String get displayName => demo != null
+      ? (demo!.signedIn ? demo!.myName : '')
+      : (profile?['name'] as String?) ?? user?.displayName ?? '';
+  String? get friendCode => demo != null ? DemoCloud.myCode : profile?['code'] as String?;
 
   Future<void> init() async {
-    // نسخة المتصفح للتجربة فقط: بدون سيرفر.
-    if (kIsWeb) return;
+    // نسخة المتصفح للتجربة فقط: بدون سيرفر، مع بيانات وهمية.
+    if (kIsWeb) {
+      demo = DemoCloud();
+      available = true;
+      return;
+    }
     try {
       await Firebase.initializeApp();
       available = true;
@@ -86,6 +95,7 @@ class CloudService extends ChangeNotifier {
   // ---------------------------------------------------------------- الدخول
 
   Future<void> signInWithApple() async {
+    if (demo != null) return _demoSignIn();
     final provider = AppleAuthProvider()
       ..addScope('name')
       ..addScope('email');
@@ -100,9 +110,16 @@ class CloudService extends ChangeNotifier {
     }
   }
 
+  Future<void> _demoSignIn() async {
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+    demo!.signedIn = true;
+    notifyListeners();
+  }
+
   bool _googleInitialized = false;
 
   Future<void> signInWithGoogle() async {
+    if (demo != null) return _demoSignIn();
     final google = GoogleSignIn.instance;
     if (!_googleInitialized) {
       await google.initialize();
@@ -115,6 +132,11 @@ class CloudService extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
+    if (demo != null) {
+      demo!.signedIn = false;
+      notifyListeners();
+      return;
+    }
     await flush();
     if (_googleInitialized) {
       try {
@@ -126,14 +148,12 @@ class CloudService extends ChangeNotifier {
 
   /// حذف الحساب: مطلوب من Apple لأي تطبيق فيه إنشاء حساب.
   Future<void> deleteAccount() async {
+    if (demo != null) return signOut();
     final u = user;
     if (u == null) return;
     final code = friendCode;
     final batch = _db.batch();
-    final friendships = await _db
-        .collection('friendships')
-        .where('members', arrayContains: u.uid)
-        .get();
+    final friendships = await _db.collection('friendships').where('members', arrayContains: u.uid).get();
     for (final d in friendships.docs) {
       batch.delete(d.reference);
     }
@@ -158,13 +178,16 @@ class CloudService extends ChangeNotifier {
   }
 
   Future<void> updateName(String name) async {
+    if (demo != null) {
+      if (name.trim().isNotEmpty) demo!.myName = name.trim();
+      notifyListeners();
+      return;
+    }
     final u = user;
     if (u == null) return;
     final clean = name.trim();
     if (clean.isEmpty || clean.length > 30) return;
-    await _db.collection('users').doc(u.uid).set({
-      'name': clean,
-    }, SetOptions(merge: true));
+    await _db.collection('users').doc(u.uid).set({'name': clean}, SetOptions(merge: true));
     profile = {...?profile, 'name': clean};
     notifyListeners();
   }
@@ -198,16 +221,11 @@ class CloudService extends ChangeNotifier {
   }
 
   /// رمز صداقة من ٦ أحرف، فريد عبر مجموعة codes.
-  Future<void> _assignCode(
-    DocumentReference<Map<String, dynamic>> userRef,
-  ) async {
+  Future<void> _assignCode(DocumentReference<Map<String, dynamic>> userRef) async {
     const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     final rnd = Random.secure();
     for (var attempt = 0; attempt < 5; attempt++) {
-      final code = List.generate(
-        6,
-        (_) => alphabet[rnd.nextInt(alphabet.length)],
-      ).join();
+      final code = List.generate(6, (_) => alphabet[rnd.nextInt(alphabet.length)]).join();
       final codeRef = _db.collection('codes').doc(code);
       try {
         await _db.runTransaction((tx) async {
@@ -229,12 +247,15 @@ class CloudService extends ChangeNotifier {
   /// تُستدعى مع كل تسبيحة. نجمع النقاط ونرسلها دفعة واحدة كل ١٠ ثوانٍ
   /// بدل طلب لكل لمسة (النسخة القديمة كانت ترسل طلباً لكل تسبيحة).
   void addPoints(int n) {
+    // في المعاينة يُقرأ المجموع المحلي مباشرة من localTotal.
+    if (demo != null) return;
     if (!signedIn) return;
     _pending += n;
     _flushTimer ??= Timer(const Duration(seconds: 10), flush);
   }
 
   Future<void> flush() async {
+    if (demo != null) return;
     _flushTimer?.cancel();
     _flushTimer = null;
     final u = user;
@@ -270,9 +291,7 @@ class CloudService extends ChangeNotifier {
 
   // -------------------------------------------------------------- الترتيب
 
-  static (String keyField, String? keyValue, String countField) _periodFields(
-    RankPeriod p,
-  ) {
+  static (String keyField, String? keyValue, String countField) _periodFields(RankPeriod p) {
     final now = DateTime.now();
     return switch (p) {
       RankPeriod.day => ('dayKey', dayKey(now), 'dayCount'),
@@ -283,17 +302,16 @@ class CloudService extends ChangeNotifier {
   }
 
   Future<List<RankEntry>> worldRanking(RankPeriod p) async {
+    if (demo != null) return demo!.world(p, localTotal());
     final (keyField, keyValue, countField) = _periodFields(p);
     Query<Map<String, dynamic>> q = _db.collection('users');
     if (keyValue != null) q = q.where(keyField, isEqualTo: keyValue);
     final snap = await q.orderBy(countField, descending: true).limit(100).get();
-    return snap.docs
-        .map((d) => _entry(d.id, d.data(), countField))
-        .where((e) => e.score > 0)
-        .toList();
+    return snap.docs.map((d) => _entry(d.id, d.data(), countField)).where((e) => e.score > 0).toList();
   }
 
   Future<List<RankEntry>> friendsRanking(RankPeriod p) async {
+    if (demo != null) return demo!.friendsRanking(p, localTotal());
     final u = user;
     if (u == null) return [];
     final (keyField, keyValue, countField) = _periodFields(p);
@@ -301,80 +319,61 @@ class CloudService extends ChangeNotifier {
     final entries = <RankEntry>[];
     for (var i = 0; i < ids.length; i += 30) {
       final chunk = ids.sublist(i, min(i + 30, ids.length));
-      final snap = await _db
-          .collection('users')
-          .where(FieldPath.documentId, whereIn: chunk)
-          .get();
+      final snap = await _db.collection('users').where(FieldPath.documentId, whereIn: chunk).get();
       for (final d in snap.docs) {
         final data = d.data();
         final current = keyValue == null || data[keyField] == keyValue;
-        entries.add(
-          _entry(d.id, current ? data : {...data, countField: 0}, countField),
-        );
+        entries.add(_entry(d.id, current ? data : {...data, countField: 0}, countField));
       }
     }
     entries.sort((a, b) => b.score.compareTo(a.score));
     return entries;
   }
 
-  RankEntry _entry(String uid, Map<String, dynamic> d, String countField) =>
-      RankEntry(
-        uid: uid,
-        name: (d['name'] as String?) ?? '',
-        score: (d[countField] as num?)?.toInt() ?? 0,
-        photoUrl: d['photo'] as String?,
-      );
+  RankEntry _entry(String uid, Map<String, dynamic> d, String countField) => RankEntry(
+    uid: uid,
+    name: (d['name'] as String?) ?? '',
+    score: (d[countField] as num?)?.toInt() ?? 0,
+    photoUrl: d['photo'] as String?,
+  );
 
   // -------------------------------------------------------------- الأصدقاء
 
-  static String pairId(String a, String b) =>
-      a.compareTo(b) < 0 ? '${a}_$b' : '${b}_$a';
+  static String pairId(String a, String b) => a.compareTo(b) < 0 ? '${a}_$b' : '${b}_$a';
 
   Future<List<String>> friendIds() async {
     final u = user;
     if (u == null) return [];
-    final snap = await _db
-        .collection('friendships')
-        .where('members', arrayContains: u.uid)
-        .get();
+    final snap = await _db.collection('friendships').where('members', arrayContains: u.uid).get();
     return [
-      for (final d in snap.docs)
-        ...(d.data()['members'] as List).cast<String>().where(
-          (m) => m != u.uid,
-        ),
+      for (final d in snap.docs) ...(d.data()['members'] as List).cast<String>().where((m) => m != u.uid),
     ];
   }
 
   Stream<List<RankEntry>> friendsStream() {
+    if (demo != null) return demo!.friendsStream();
     final u = user;
     if (u == null) return const Stream.empty();
-    return _db
-        .collection('friendships')
-        .where('members', arrayContains: u.uid)
-        .snapshots()
-        .asyncMap((snap) async {
-          final ids = [
-            for (final d in snap.docs)
-              ...(d.data()['members'] as List).cast<String>().where(
-                (m) => m != u.uid,
-              ),
-          ];
-          final out = <RankEntry>[];
-          for (var i = 0; i < ids.length; i += 30) {
-            final chunk = ids.sublist(i, min(i + 30, ids.length));
-            final users = await _db
-                .collection('users')
-                .where(FieldPath.documentId, whereIn: chunk)
-                .get();
-            out.addAll(users.docs.map((d) => _entry(d.id, d.data(), 'total')));
-          }
-          out.sort((a, b) => a.name.compareTo(b.name));
-          return out;
-        });
+    return _db.collection('friendships').where('members', arrayContains: u.uid).snapshots().asyncMap((
+      snap,
+    ) async {
+      final ids = [
+        for (final d in snap.docs) ...(d.data()['members'] as List).cast<String>().where((m) => m != u.uid),
+      ];
+      final out = <RankEntry>[];
+      for (var i = 0; i < ids.length; i += 30) {
+        final chunk = ids.sublist(i, min(i + 30, ids.length));
+        final users = await _db.collection('users').where(FieldPath.documentId, whereIn: chunk).get();
+        out.addAll(users.docs.map((d) => _entry(d.id, d.data(), 'total')));
+      }
+      out.sort((a, b) => a.name.compareTo(b.name));
+      return out;
+    });
   }
 
   /// يرجع false إذا الرمز غير موجود.
   Future<bool> sendFriendRequest(String code) async {
+    if (demo != null) return code.trim().length >= 4 && code.trim().toUpperCase() != DemoCloud.myCode;
     final u = user;
     if (u == null) return false;
     final clean = code.trim().toUpperCase();
@@ -392,6 +391,7 @@ class CloudService extends ChangeNotifier {
   }
 
   Stream<List<FriendRequest>> incomingRequests() {
+    if (demo != null) return demo!.requestsStream();
     final u = user;
     if (u == null) return const Stream.empty();
     return _db
@@ -412,6 +412,7 @@ class CloudService extends ChangeNotifier {
   }
 
   Future<void> acceptRequest(FriendRequest r) async {
+    if (demo != null) return demo!.accept(r);
     final u = user;
     if (u == null) return;
     // الصداقة تُنشأ أولاً (القواعد تتحقق من وجود الطلب)، ثم يُحذف الطلب.
@@ -423,10 +424,13 @@ class CloudService extends ChangeNotifier {
     await _db.collection('friendRequests').doc(r.id).delete();
   }
 
-  Future<void> declineRequest(FriendRequest r) =>
-      _db.collection('friendRequests').doc(r.id).delete();
+  Future<void> declineRequest(FriendRequest r) async {
+    if (demo != null) return demo!.decline(r);
+    await _db.collection('friendRequests').doc(r.id).delete();
+  }
 
   Future<void> removeFriend(String uid) async {
+    if (demo != null) return demo!.remove(uid);
     final u = user;
     if (u == null) return;
     await _db.collection('friendships').doc(pairId(u.uid, uid)).delete();
@@ -435,6 +439,7 @@ class CloudService extends ChangeNotifier {
   // -------------------------------------------------------------- المحادثة
 
   Stream<List<ChatMessage>> messages(String friendUid) {
+    if (demo != null) return demo!.messages(friendUid);
     final u = user;
     if (u == null) return const Stream.empty();
     return _db
@@ -457,17 +462,17 @@ class CloudService extends ChangeNotifier {
   }
 
   Future<void> sendMessage(String friendUid, String text) async {
+    if (demo != null) {
+      if (text.trim().isNotEmpty) demo!.send(friendUid, text.trim());
+      return;
+    }
     final u = user;
     final clean = text.trim();
     if (u == null || clean.isEmpty) return;
-    await _db
-        .collection('friendships')
-        .doc(pairId(u.uid, friendUid))
-        .collection('messages')
-        .add({
-          'from': u.uid,
-          'text': clean.length > 500 ? clean.substring(0, 500) : clean,
-          'at': FieldValue.serverTimestamp(),
-        });
+    await _db.collection('friendships').doc(pairId(u.uid, friendUid)).collection('messages').add({
+      'from': u.uid,
+      'text': clean.length > 500 ? clean.substring(0, 500) : clean,
+      'at': FieldValue.serverTimestamp(),
+    });
   }
 }

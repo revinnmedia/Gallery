@@ -43,7 +43,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final me = CloudService.instance.user?.uid;
+    final me = CloudService.instance.uid;
     final lang = context.read<AppState>().language;
     final timeFmt = DateFormat.jm(lang);
     return KanzPage(

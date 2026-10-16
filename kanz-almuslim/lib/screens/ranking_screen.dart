@@ -5,6 +5,8 @@ import '../l10n.dart';
 import '../platform.dart';
 import '../models.dart';
 import '../services/cloud_service.dart';
+import '../services/demo_cloud.dart';
+import '../state/app_state.dart';
 import '../services/games_service.dart';
 import '../theme.dart';
 import '../widgets/avatar.dart';
@@ -35,13 +37,14 @@ class _RankingScreenState extends State<RankingScreen> {
   @override
   Widget build(BuildContext context) {
     final cloud = context.watch<CloudService>();
-    if (cloud.signedIn && _loadedFor != cloud.user!.uid) {
-      _loadedFor = cloud.user!.uid;
+    if (cloud.signedIn && _loadedFor != cloud.uid!) {
+      _loadedFor = cloud.uid!;
       WidgetsBinding.instance.addPostFrameCallback((_) => _reload());
     }
 
     return Scaffold(
       appBar: AppBar(
+        bottom: demoNoteBar(cloud, context.read<AppState>().language),
         title: Text(tr(context, 'tabRanking')),
         actions: [
           if (cloud.available)
@@ -143,7 +146,7 @@ class _RankingScreenState extends State<RankingScreen> {
                               itemBuilder: (_, i) => _RankTile(
                                 rank: i + 1,
                                 entry: list[i],
-                                isMe: list[i].uid == cloud.user!.uid,
+                                isMe: list[i].uid == cloud.uid!,
                               ),
                             );
                           },
