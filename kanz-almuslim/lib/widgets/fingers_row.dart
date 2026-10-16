@@ -15,7 +15,7 @@ class FingersController {
 /// الأصابع الخمسة أسفل شاشة التسبيح (من تصميم النسخة الأصلية).
 ///
 /// مع كل تسبيحة يطير إصبع للأعلى مع توهّج خفيف ويتلاشى تدريجياً،
-/// وتنتشر موجة دائرية من مكانه، ثم يعود من الأسفل بارتداد ناعم.
+/// وتنتشر موجة دائرية من مكانه. بعد اختفاء الخامس تعود كلها بارتداد ناعم.
 /// يمكن أيضاً سحب أي إصبع للأعلى مباشرة.
 class FingersRow extends StatefulWidget {
   const FingersRow({super.key, required this.controller, required this.onCount, this.count = 5});
@@ -37,9 +37,6 @@ class _FingersRowState extends State<FingersRow> with TickerProviderStateMixin {
   late final List<AnimationController> _fly;
   late final List<AnimationController> _grow;
   late final List<double> _drag;
-
-  /// ترتيب الإطلاق: من اليمين لليسار (اتجاه القراءة العربية).
-  int _next = 0;
 
   @override
   void initState() {
@@ -69,14 +66,17 @@ class _FingersRowState extends State<FingersRow> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  bool _ready(int i) => !_fly[i].isAnimating && _grow[i].value >= 1;
+  /// الإصبع جاهز إذا كان في مكانه (لم يطِر بعد ولا يعود الآن).
+  bool _ready(int i) => _fly[i].value == 0 && !_fly[i].isAnimating && _grow[i].value >= 1;
 
-  /// يطلق أول إصبع جاهز بالترتيب. إذا كانت كلها في الهواء لا يتوقف العدّ.
+  /// كل الأصابع طارت واختفت.
+  bool get _allGone => _fly.every((f) => f.value == 1 && !f.isAnimating);
+
+  /// يطلق أول إصبع جاهز بالترتيب. الأصابع تختفي واحداً واحداً
+  /// ولا تعود إلا بعد اختفاء آخر إصبع. العدّ لا يتوقف في الأثناء.
   void _launchNext() {
-    for (var k = 0; k < widget.count; k++) {
-      final i = (_next + k) % widget.count;
+    for (var i = 0; i < widget.count; i++) {
       if (_ready(i)) {
-        _next = (i + 1) % widget.count;
         _animate(i);
         return;
       }
@@ -87,11 +87,21 @@ class _FingersRowState extends State<FingersRow> with TickerProviderStateMixin {
     await _fly[i].forward(from: 0);
     if (!mounted) return;
     setState(() => _drag[i] = 0);
-    _grow[i].value = 0;
-    _fly[i].value = 0;
-    await Future<void>.delayed(const Duration(milliseconds: 90));
-    if (!mounted) return;
-    await _grow[i].forward(from: 0);
+    if (_allGone) await _regrowAll();
+  }
+
+  /// تعود الأصابع الخمسة معاً من الأسفل، بتتابع خفيف من اليمين.
+  Future<void> _regrowAll() async {
+    for (var j = 0; j < widget.count; j++) {
+      _grow[j].value = 0;
+      _fly[j].value = 0;
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 120));
+    for (var j = 0; j < widget.count; j++) {
+      if (!mounted) return;
+      _grow[j].forward(from: 0);
+      if (j < widget.count - 1) await Future<void>.delayed(const Duration(milliseconds: 70));
+    }
   }
 
   @override
