@@ -23,7 +23,10 @@ const _strings = <String, Map<String, String>>{
   'autoReminder': {'ar': 'تذكير تلقائي', 'en': 'Auto reminder'},
   'notifyEvery': {'ar': 'تنبيه كل', 'en': 'Notify every'},
   'minute': {'ar': 'دقيقه', 'en': 'min'},
-  'chooseType': {'ar': 'اختر نوع و وقت التذكير', 'en': 'Choose reminder type and time'},
+  'chooseType': {
+    'ar': 'اختر نوع و وقت التذكير',
+    'en': 'Choose reminder type and time',
+  },
   'customReminder': {'ar': 'تذكير مخصص', 'en': 'Custom reminder'},
   'addAdhkar': {'ar': 'اضافه الاذكار', 'en': 'Add adhkar'},
   'editAdhkar': {'ar': 'تحرير الاذكار', 'en': 'Edit adhkar'},
@@ -31,9 +34,12 @@ const _strings = <String, Map<String, String>>{
   'every': {'ar': 'كل', 'en': 'Every'},
   'notifPermissionDenied': {
     'ar': 'الاشعارات مقفله. فعّلها من اعدادات الجهاز',
-    'en': 'Notifications are off. Enable them in device settings.'
+    'en': 'Notifications are off. Enable them in device settings.',
   },
-  'reminderSound': {'ar': 'صوت الذكر مع التنبيه', 'en': 'Dhikr sound with reminders'},
+  'reminderSound': {
+    'ar': 'صوت الذكر مع التنبيه',
+    'en': 'Dhikr sound with reminders',
+  },
   // الإعدادات
   'language': {'ar': 'اللغه', 'en': 'Language'},
   'support': {'ar': 'الاشتراك و دعم التطبيق', 'en': 'Subscribe & support'},
@@ -52,46 +58,57 @@ const _strings = <String, Map<String, String>>{
   'account': {'ar': 'الحساب', 'en': 'Account'},
   'shareText': {
     'ar': 'جرّب تطبيق كنز المسلم للتسبيح والمنافسة في ذكر الله',
-    'en': 'Try Kanz Al Muslim, a tasbeeh app to compete in remembering Allah'
+    'en': 'Try Kanz Al Muslim, a tasbeeh app to compete in remembering Allah',
   },
   'aboutBody': {
-    'ar':
-        'بعون الله ورعايته نقدم لكم تطبيق كنز المسلم ونتمنى من الله أن ينال اعجابكم. التطبيق عبارة عن طريقة جديدة للتسبيح ومحفزة لروح المنافسة بين الاصدقاء والمسلمين، حيث يعرض ترتيبك بين اصدقائك والمسبحين حول العالم، ويحفظ التسبيحات لكل تسبيحة على حدة، مع الاهتزاز عند ٣٣ والتهنئة عند المائة.',
-    'en':
-        'Kanz Al Muslim is a new way to do tasbeeh that motivates friendly competition between friends and Muslims worldwide.'
+    'ar': 'بعون الله ورعايته نقدم لكم تطبيق كنز المسلم ونتمنى من الله أن ينال اعجابكم. التطبيق عبارة عن طريقة جديدة للتسبيح ومحفزة لروح المنافسة بين الاصدقاء والمسلمين، حيث يعرض ترتيبك بين اصدقائك والمسبحين حول العالم، ويحفظ التسبيحات لكل تسبيحة على حدة، مع الاهتزاز عند ٣٣ والتهنئة عند المائة.',
+    'en': 'Kanz Al Muslim is a new way to do tasbeeh that motivates friendly competition between friends and Muslims worldwide.',
   },
   // الدعم
   'supportBody': {
-    'ar':
-        'يحتاج التطبيق الى متابعه و تحسين و تطوير من فريق عمل متكامل و هذا مكلف, كن على يقين ان دعمك لنا من خلال الشراء يساعدنا كثيرا في تطوير التطبيق و الاستمرار في تحسينه, كما انها فرصه لكل واحد منكم بأن يكون شريك في الأجر و الثواب في تطوير التطبيق و ليس فقط باستخدامه',
-    'en':
-        'The app needs continuous care from a full team, which is costly. Your support helps us keep improving it, and is a chance to share in the reward.'
+    'ar': 'يحتاج التطبيق الى متابعه و تحسين و تطوير من فريق عمل متكامل و هذا مكلف, كن على يقين ان دعمك لنا من خلال الشراء يساعدنا كثيرا في تطوير التطبيق و الاستمرار في تحسينه, كما انها فرصه لكل واحد منكم بأن يكون شريك في الأجر و الثواب في تطوير التطبيق و ليس فقط باستخدامه',
+    'en': 'The app needs continuous care from a full team, which is costly. Your support helps us keep improving it, and is a chance to share in the reward.',
   },
   'getPremium': {'ar': 'احصل على عضويه مميزه', 'en': 'Get premium membership'},
   'restore': {'ar': 'استعادة المشتريات', 'en': 'Restore Purchase'},
   'back': {'ar': 'رجوع', 'en': 'Back'},
-  'thanksPremium': {'ar': 'جزاك الله خيرا على دعمك', 'en': 'Thank you for your support'},
-  'storeUnavailable': {'ar': 'المتجر غير متاح حاليا', 'en': 'Store not available right now'},
+  'thanksPremium': {
+    'ar': 'جزاك الله خيرا على دعمك',
+    'en': 'Thank you for your support',
+  },
+  'storeUnavailable': {
+    'ar': 'المتجر غير متاح حاليا',
+    'en': 'Store not available right now',
+  },
   // الحساب والترتيب
   'signIn': {'ar': 'تسجيل الدخول', 'en': 'Sign in'},
-  'signInToCompete': {'ar': 'سجّل الدخول لتنافس الذاكرين حول العالم', 'en': 'Sign in to compete worldwide'},
+  'signInToCompete': {
+    'ar': 'سجّل الدخول لتنافس الذاكرين حول العالم',
+    'en': 'Sign in to compete worldwide',
+  },
   'signInApple': {'ar': 'المتابعه مع Apple', 'en': 'Continue with Apple'},
   'signInGoogle': {'ar': 'المتابعه مع Google', 'en': 'Continue with Google'},
   'signOut': {'ar': 'تسجيل الخروج', 'en': 'Sign out'},
   'deleteAccount': {'ar': 'حذف الحساب', 'en': 'Delete account'},
   'deleteAccountConfirm': {
     'ar': 'سيتم حذف حسابك ونقاطك من الترتيب نهائيا. تسبيحك المحفوظ على الجهاز يبقى كما هو.',
-    'en': 'Your account and ranking points will be permanently deleted. Tasbeeh saved on this device stays.'
+    'en': 'Your account and ranking points will be permanently deleted. Tasbeeh saved on this device stays.',
   },
   'displayName': {'ar': 'الاسم الظاهر', 'en': 'Display name'},
-  'cloudOff': {'ar': 'الترتيب غير متاح حاليا', 'en': 'Ranking is not available right now'},
+  'cloudOff': {
+    'ar': 'الترتيب غير متاح حاليا',
+    'en': 'Ranking is not available right now',
+  },
   'today': {'ar': 'اليوم', 'en': 'Today'},
   'thisWeek': {'ar': 'الاسبوع', 'en': 'Week'},
   'thisMonth': {'ar': 'الشهر', 'en': 'Month'},
   'allTime': {'ar': 'الكل', 'en': 'All'},
   'world': {'ar': 'العالم', 'en': 'World'},
   'you': {'ar': 'أنت', 'en': 'You'},
-  'noOneYet': {'ar': 'لا يوجد أحد بعد، كن الأول!', 'en': 'No one yet, be the first!'},
+  'noOneYet': {
+    'ar': 'لا يوجد أحد بعد، كن الأول!',
+    'en': 'No one yet, be the first!',
+  },
   'gameCenter': {'ar': 'Game Center', 'en': 'Game Center'},
   'playGames': {'ar': 'Play Games', 'en': 'Play Games'},
   // الأصدقاء
@@ -102,7 +119,10 @@ const _strings = <String, Map<String, String>>{
   'requestSent': {'ar': 'تم ارسال الطلب', 'en': 'Request sent'},
   'codeNotFound': {'ar': 'الرمز غير صحيح', 'en': 'Code not found'},
   'requests': {'ar': 'طلبات الصداقه', 'en': 'Friend requests'},
-  'noFriends': {'ar': 'أضف أصدقاءك وتنافسوا في الذكر', 'en': 'Add friends and compete in dhikr'},
+  'noFriends': {
+    'ar': 'أضف أصدقاءك وتنافسوا في الذكر',
+    'en': 'Add friends and compete in dhikr',
+  },
   'removeFriend': {'ar': 'ازاله الصديق', 'en': 'Remove friend'},
   'typeMessage': {'ar': 'اكتب رساله…', 'en': 'Type a message…'},
   // التسابيح
@@ -110,8 +130,14 @@ const _strings = <String, Map<String, String>>{
   'editDhikr': {'ar': 'تعديل التسبيحه', 'en': 'Edit tasbeeh'},
   'dhikrText': {'ar': 'نص التسبيحه', 'en': 'Tasbeeh text'},
   'cycleOf': {'ar': 'عدد الحبات', 'en': 'Beads per cycle'},
-  'deleteConfirm': {'ar': 'هل تريد حذف هذه التسبيحه؟', 'en': 'Delete this tasbeeh?'},
-  'cantDeleteLast': {'ar': 'يجب أن تبقى تسبيحه واحده على الأقل', 'en': 'At least one tasbeeh must remain'},
+  'deleteConfirm': {
+    'ar': 'هل تريد حذف هذه التسبيحه؟',
+    'en': 'Delete this tasbeeh?',
+  },
+  'cantDeleteLast': {
+    'ar': 'يجب أن تبقى تسبيحه واحده على الأقل',
+    'en': 'At least one tasbeeh must remain',
+  },
   'congrats': {'ar': 'مبروك', 'en': 'Congratulations'},
   'youGot': {'ar': 'حصلت على', 'en': 'You got'},
   'points': {'ar': 'نقطة', 'en': 'points'},
@@ -119,7 +145,10 @@ const _strings = <String, Map<String, String>>{
   'save': {'ar': 'حفظ', 'en': 'Save'},
   'cancel': {'ar': 'الغاء', 'en': 'Cancel'},
   'delete': {'ar': 'حذف', 'en': 'Delete'},
-  'error': {'ar': 'حدث خطأ، حاول مره أخرى', 'en': 'Something went wrong, try again'},
+  'error': {
+    'ar': 'حدث خطأ، حاول مره أخرى',
+    'en': 'Something went wrong, try again',
+  },
 };
 
 /// اللغة تُقرأ بدون اشتراك، والتطبيق كله يُعاد بناؤه عند تغيير اللغة

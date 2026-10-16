@@ -19,20 +19,20 @@ class Dhikr {
   final bool builtIn;
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'text': text,
-        'sound': sound,
-        'target': target,
-        'builtIn': builtIn,
-      };
+    'id': id,
+    'text': text,
+    'sound': sound,
+    'target': target,
+    'builtIn': builtIn,
+  };
 
   factory Dhikr.fromJson(Map<String, dynamic> j) => Dhikr(
-        id: j['id'] as String,
-        text: j['text'] as String,
-        sound: j['sound'] as String?,
-        target: (j['target'] as num?)?.toInt() ?? 33,
-        builtIn: j['builtIn'] as bool? ?? false,
-      );
+    id: j['id'] as String,
+    text: j['text'] as String,
+    sound: j['sound'] as String?,
+    target: (j['target'] as num?)?.toInt() ?? 33,
+    builtIn: j['builtIn'] as bool? ?? false,
+  );
 }
 
 /// عبارة تذكير تظهر في التنبيهات.
@@ -59,20 +59,20 @@ class CustomReminder {
   bool enabled;
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'text': text,
-        'sound': sound,
-        'interval': intervalMinutes,
-        'enabled': enabled,
-      };
+    'id': id,
+    'text': text,
+    'sound': sound,
+    'interval': intervalMinutes,
+    'enabled': enabled,
+  };
 
   factory CustomReminder.fromJson(Map<String, dynamic> j) => CustomReminder(
-        id: j['id'] as String,
-        text: j['text'] as String,
-        sound: j['sound'] as String?,
-        intervalMinutes: (j['interval'] as num).toInt(),
-        enabled: j['enabled'] as bool? ?? true,
-      );
+    id: j['id'] as String,
+    text: j['text'] as String,
+    sound: j['sound'] as String?,
+    intervalMinutes: (j['interval'] as num).toInt(),
+    enabled: j['enabled'] as bool? ?? true,
+  );
 }
 
 /// مستخدم في لوحة الترتيب.

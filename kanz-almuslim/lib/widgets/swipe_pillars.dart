@@ -14,7 +14,8 @@ class SwipePillars extends StatefulWidget {
   State<SwipePillars> createState() => _SwipePillarsState();
 }
 
-class _SwipePillarsState extends State<SwipePillars> with TickerProviderStateMixin {
+class _SwipePillarsState extends State<SwipePillars>
+    with TickerProviderStateMixin {
   late final List<AnimationController> _fly;
   late final List<AnimationController> _grow;
   late final List<double> _drag;
@@ -22,10 +23,21 @@ class _SwipePillarsState extends State<SwipePillars> with TickerProviderStateMix
   @override
   void initState() {
     super.initState();
-    _fly = List.generate(widget.count,
-        (_) => AnimationController(vsync: this, duration: const Duration(milliseconds: 260)));
-    _grow = List.generate(widget.count,
-        (_) => AnimationController(vsync: this, duration: const Duration(milliseconds: 320), value: 1));
+    _fly = List.generate(
+      widget.count,
+      (_) => AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 260),
+      ),
+    );
+    _grow = List.generate(
+      widget.count,
+      (_) => AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 320),
+        value: 1,
+      ),
+    );
     _drag = List.filled(widget.count, 0);
   }
 
@@ -52,65 +64,76 @@ class _SwipePillarsState extends State<SwipePillars> with TickerProviderStateMix
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, c) {
-      const gap = 6.0;
-      final w = (c.maxWidth - gap * (widget.count + 1)) / widget.count;
-      final h = c.maxHeight;
-      // الترتيب ثابت من اليسار لليمين، والعمود الأيمن هو المضيء.
-      return Directionality(
-        textDirection: TextDirection.ltr,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: List.generate(widget.count, (i) {
-            final active = i == widget.count - 1;
-            return Padding(
-              padding: EdgeInsets.only(left: gap, right: i == widget.count - 1 ? gap : 0),
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => _launch(i),
-                onVerticalDragUpdate: (d) {
-                  if (_fly[i].isAnimating) return;
-                  setState(() => _drag[i] = (_drag[i] + d.delta.dy).clamp(-h, 0));
-                },
-                onVerticalDragEnd: (d) {
-                  final v = d.primaryVelocity ?? 0;
-                  if (_drag[i] < -30 || v < -250) {
-                    _launch(i);
-                  } else {
-                    setState(() => _drag[i] = 0);
-                  }
-                },
-                child: SizedBox(
-                  width: w,
-                  height: h,
-                  child: AnimatedBuilder(
-                    animation: Listenable.merge([_fly[i], _grow[i]]),
-                    builder: (context, _) {
-                      final fly = Curves.easeIn.transform(_fly[i].value);
-                      final grow = Curves.easeOut.transform(_grow[i].value);
-                      final dy = _drag[i] - fly * (h + 200);
-                      return ClipRect(
-                        clipper: _AboveClipper(extra: 400),
-                        child: Align(
-                          alignment: Alignment.bottomCenter,
-                          child: Transform.translate(
-                            offset: Offset(0, dy + (1 - grow) * h),
-                            child: Opacity(
-                              opacity: (1 - fly * 0.7).clamp(0, 1),
-                              child: _Pillar(width: w, height: h, active: active),
+    return LayoutBuilder(
+      builder: (context, c) {
+        const gap = 6.0;
+        final w = (c.maxWidth - gap * (widget.count + 1)) / widget.count;
+        final h = c.maxHeight;
+        // الترتيب ثابت من اليسار لليمين، والعمود الأيمن هو المضيء.
+        return Directionality(
+          textDirection: TextDirection.ltr,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: List.generate(widget.count, (i) {
+              final active = i == widget.count - 1;
+              return Padding(
+                padding: EdgeInsets.only(
+                  left: gap,
+                  right: i == widget.count - 1 ? gap : 0,
+                ),
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => _launch(i),
+                  onVerticalDragUpdate: (d) {
+                    if (_fly[i].isAnimating) return;
+                    setState(
+                      () => _drag[i] = (_drag[i] + d.delta.dy).clamp(-h, 0),
+                    );
+                  },
+                  onVerticalDragEnd: (d) {
+                    final v = d.primaryVelocity ?? 0;
+                    if (_drag[i] < -30 || v < -250) {
+                      _launch(i);
+                    } else {
+                      setState(() => _drag[i] = 0);
+                    }
+                  },
+                  child: SizedBox(
+                    width: w,
+                    height: h,
+                    child: AnimatedBuilder(
+                      animation: Listenable.merge([_fly[i], _grow[i]]),
+                      builder: (context, _) {
+                        final fly = Curves.easeIn.transform(_fly[i].value);
+                        final grow = Curves.easeOut.transform(_grow[i].value);
+                        final dy = _drag[i] - fly * (h + 200);
+                        return ClipRect(
+                          clipper: _AboveClipper(extra: 400),
+                          child: Align(
+                            alignment: Alignment.bottomCenter,
+                            child: Transform.translate(
+                              offset: Offset(0, dy + (1 - grow) * h),
+                              child: Opacity(
+                                opacity: (1 - fly * 0.7).clamp(0, 1),
+                                child: _Pillar(
+                                  width: w,
+                                  height: h,
+                                  active: active,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   ),
                 ),
-              ),
-            );
-          }),
-        ),
-      );
-    });
+              );
+            }),
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -120,14 +143,19 @@ class _AboveClipper extends CustomClipper<Rect> {
   final double extra;
 
   @override
-  Rect getClip(Size size) => Rect.fromLTRB(-20, -size.height - extra, size.width + 20, size.height);
+  Rect getClip(Size size) =>
+      Rect.fromLTRB(-20, -size.height - extra, size.width + 20, size.height);
 
   @override
   bool shouldReclip(_AboveClipper old) => old.extra != extra;
 }
 
 class _Pillar extends StatelessWidget {
-  const _Pillar({required this.width, required this.height, required this.active});
+  const _Pillar({
+    required this.width,
+    required this.height,
+    required this.active,
+  });
   final double width;
   final double height;
   final bool active;
@@ -143,13 +171,20 @@ class _Pillar extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: active
-              ? const [KanzColors.pillarActiveTop, KanzColors.pillarActiveBottom]
+              ? const [
+                  KanzColors.pillarActiveTop,
+                  KanzColors.pillarActiveBottom,
+                ]
               : const [KanzColors.pillarTop, KanzColors.pillarBottom],
         ),
       ),
       alignment: Alignment.topCenter,
       padding: EdgeInsets.only(top: width * 0.22),
-      child: Icon(Icons.keyboard_arrow_up, size: width * 0.6, color: KanzColors.pillarChevron),
+      child: Icon(
+        Icons.keyboard_arrow_up,
+        size: width * 0.6,
+        color: KanzColors.pillarChevron,
+      ),
     );
   }
 }

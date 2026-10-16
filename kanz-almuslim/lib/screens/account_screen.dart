@@ -25,7 +25,11 @@ class AccountScreen extends StatelessWidget {
         padding: EdgeInsets.zero,
         children: [
           KanzRow(
-            icon: const Icon(Icons.person_outline, color: Colors.white, size: 40),
+            icon: const Icon(
+              Icons.person_outline,
+              color: Colors.white,
+              size: 40,
+            ),
             title: cloud.displayName,
             subtitle: tr(context, 'displayName'),
             trailing: const Icon(Icons.edit_outlined, color: Colors.white70),
@@ -38,7 +42,11 @@ class AccountScreen extends StatelessWidget {
             onTap: cloud.signOut,
           ),
           KanzRow(
-            icon: const Icon(Icons.delete_forever_outlined, color: Colors.redAccent, size: 38),
+            icon: const Icon(
+              Icons.delete_forever_outlined,
+              color: Colors.redAccent,
+              size: 38,
+            ),
             title: tr(context, 'deleteAccount'),
             chevron: false,
             onTap: () => _delete(context, cloud),
@@ -56,8 +64,14 @@ class AccountScreen extends StatelessWidget {
         title: Text(tr(context, 'displayName')),
         content: TextField(controller: ctrl, autofocus: true, maxLength: 30),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr(context, 'cancel'))),
-          TextButton(onPressed: () => Navigator.pop(ctx, ctrl.text), child: Text(tr(context, 'save'))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(tr(context, 'cancel')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, ctrl.text),
+            child: Text(tr(context, 'save')),
+          ),
         ],
       ),
     );
@@ -74,10 +88,16 @@ class AccountScreen extends StatelessWidget {
         title: Text(tr(context, 'deleteAccount')),
         content: Text(tr(context, 'deleteAccountConfirm')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr(context, 'cancel'))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(tr(context, 'cancel')),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(tr(context, 'delete'), style: const TextStyle(color: Colors.redAccent)),
+            child: Text(
+              tr(context, 'delete'),
+              style: const TextStyle(color: Colors.redAccent),
+            ),
           ),
         ],
       ),

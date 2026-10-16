@@ -25,6 +25,7 @@ class PurchaseService extends ChangeNotifier {
   StreamSubscription<List<PurchaseDetails>>? _sub;
 
   Future<void> init() async {
+    if (kIsWeb) return;
     final iap = InAppPurchase.instance;
     try {
       available = await iap.isAvailable();
@@ -33,7 +34,10 @@ class PurchaseService extends ChangeNotifier {
       available = false;
     }
     if (!available) return;
-    _sub = iap.purchaseStream.listen(_onPurchases, onError: (e) => debugPrint('IAP error: $e'));
+    _sub = iap.purchaseStream.listen(
+      _onPurchases,
+      onError: (e) => debugPrint('IAP error: $e'),
+    );
     await loadProducts();
   }
 
@@ -42,8 +46,11 @@ class PurchaseService extends ChangeNotifier {
     loading = true;
     notifyListeners();
     try {
-      final res = await InAppPurchase.instance.queryProductDetails(productIds.toSet());
-      products = res.productDetails..sort((a, b) => a.rawPrice.compareTo(b.rawPrice));
+      final res = await InAppPurchase.instance.queryProductDetails(
+        productIds.toSet(),
+      );
+      products = res.productDetails
+        ..sort((a, b) => a.rawPrice.compareTo(b.rawPrice));
     } catch (e) {
       debugPrint('IAP query failed: $e');
     }
@@ -51,14 +58,16 @@ class PurchaseService extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> buy(ProductDetails p) =>
-      InAppPurchase.instance.buyNonConsumable(purchaseParam: PurchaseParam(productDetails: p));
+  Future<void> buy(ProductDetails p) => InAppPurchase.instance.buyNonConsumable(
+    purchaseParam: PurchaseParam(productDetails: p),
+  );
 
   Future<void> restore() => InAppPurchase.instance.restorePurchases();
 
   Future<void> _onPurchases(List<PurchaseDetails> list) async {
     for (final p in list) {
-      if (p.status == PurchaseStatus.purchased || p.status == PurchaseStatus.restored) {
+      if (p.status == PurchaseStatus.purchased ||
+          p.status == PurchaseStatus.restored) {
         onPremium?.call();
       }
       if (p.pendingCompletePurchase) {

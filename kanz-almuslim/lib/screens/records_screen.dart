@@ -24,13 +24,25 @@ class RecordsScreen extends StatelessWidget {
       }
     }
 
-    const style = TextStyle(fontSize: 19, fontWeight: FontWeight.w300, color: Colors.white);
+    const style = TextStyle(
+      fontSize: 19,
+      fontWeight: FontWeight.w300,
+      color: Colors.white,
+    );
     return KanzPage(
       title: tr(context, 'tabRecords'),
-      onHeart: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SupportScreen())),
+      onHeart: () =>
+          Navigator.of(context)
+              .push(MaterialPageRoute(builder: (_) => const SupportScreen())),
       body: Column(
         children: [
-          KanzTableHeader(cells: [tr(context, 'date'), tr(context, 'dhikr'), tr(context, 'count')]),
+          KanzTableHeader(
+            cells: [
+              tr(context, 'date'),
+              tr(context, 'dhikr'),
+              tr(context, 'count'),
+            ],
+          ),
           Expanded(
             child: rows.isEmpty
                 ? Center(child: Text(tr(context, 'noRecords'), style: style))
@@ -43,13 +55,24 @@ class RecordsScreen extends StatelessWidget {
                         height: 46,
                         child: Row(
                           children: [
-                            Expanded(child: Center(child: Text(day, style: style))),
+                            Expanded(
+                              child: Center(child: Text(day, style: style)),
+                            ),
                             Expanded(
                               child: Center(
-                                child: Text(text, style: style, maxLines: 1, overflow: TextOverflow.ellipsis),
+                                child: Text(
+                                  text,
+                                  style: style,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                             ),
-                            Expanded(child: Center(child: Text('$count', style: style))),
+                            Expanded(
+                              child: Center(
+                                child: Text('$count', style: style),
+                              ),
+                            ),
                           ],
                         ),
                       );

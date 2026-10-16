@@ -12,9 +12,9 @@ class KanzBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => DecoratedBox(
-        decoration: const BoxDecoration(gradient: KanzColors.background),
-        child: child,
-      );
+    decoration: const BoxDecoration(gradient: KanzColors.background),
+    child: child,
+  );
 }
 
 /// صفحة بالشكل الأصلي: خلفية متدرجة + شريط عنوان علوي.
@@ -43,7 +43,12 @@ class KanzPage extends StatelessWidget {
       body: KanzBackground(
         child: Column(
           children: [
-            KanzHeader(title: title, onHeart: onHeart, showBack: showBack, action: action),
+            KanzHeader(
+              title: title,
+              onHeart: onHeart,
+              showBack: showBack,
+              action: action,
+            ),
             Expanded(child: body),
           ],
         ),
@@ -53,7 +58,13 @@ class KanzPage extends StatelessWidget {
 }
 
 class KanzHeader extends StatelessWidget {
-  const KanzHeader({super.key, required this.title, this.onHeart, this.showBack = false, this.action});
+  const KanzHeader({
+    super.key,
+    required this.title,
+    this.onHeart,
+    this.showBack = false,
+    this.action,
+  });
   final String title;
   final VoidCallback? onHeart;
   final bool showBack;
@@ -73,13 +84,24 @@ class KanzHeader extends StatelessWidget {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w300, color: Colors.white)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w300,
+                    color: Colors.white,
+                  ),
+                ),
                 if (showBack)
                   PositionedDirectional(
                     start: 4,
                     child: IconButton(
                       onPressed: () => Navigator.of(context).maybePop(),
-                      icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 22),
+                      icon: const Icon(
+                        Icons.arrow_back_ios_new,
+                        color: Colors.white,
+                        size: 22,
+                      ),
                     ),
                   ),
                 // القلب دائماً في أعلى اليسار كما في الأصل.
@@ -88,10 +110,16 @@ class KanzHeader extends StatelessWidget {
                     left: 6,
                     child: IconButton(
                       onPressed: onHeart,
-                      icon: const Icon(Icons.favorite_border, color: Colors.white, size: 34, weight: 200),
+                      icon: const Icon(
+                        Icons.favorite_border,
+                        color: Colors.white,
+                        size: 34,
+                        weight: 200,
+                      ),
                     ),
                   ),
-                if (action != null) Positioned(left: onHeart != null ? 54 : 6, child: action!),
+                if (action != null)
+                  Positioned(left: onHeart != null ? 54 : 6, child: action!),
               ],
             ),
           ),
@@ -110,11 +138,11 @@ class KanzSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => CupertinoSwitch(
-        value: value,
-        activeTrackColor: KanzColors.switchGreen,
-        inactiveTrackColor: const Color(0x40FFFFFF),
-        onChanged: onChanged,
-      );
+    value: value,
+    activeTrackColor: KanzColors.switchGreen,
+    inactiveTrackColor: const Color(0x40FFFFFF),
+    onChanged: onChanged,
+  );
 }
 
 /// صف بالشكل الأصلي: أيقونة على اليمين، نص، وسهم أو مفتاح على اليسار.
@@ -144,12 +172,17 @@ class KanzRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final end = trailing ??
+    final end =
+        trailing ??
         (chevron && onTap != null
             // السهم يشير لليسار دائماً كما في النسخة الأصلية.
             ? const Directionality(
                 textDirection: TextDirection.ltr,
-                child: Icon(Icons.arrow_back_ios_new, color: Colors.white70, size: 18),
+                child: Icon(
+                  Icons.arrow_back_ios_new,
+                  color: Colors.white70,
+                  size: 18,
+                ),
               )
             : null);
     return InkWell(
@@ -171,10 +204,23 @@ class KanzRow extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(title, style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w300, color: Colors.white)),
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 21,
+                            fontWeight: FontWeight.w300,
+                            color: Colors.white,
+                          ),
+                        ),
                         if (subtitle != null)
-                          Text(subtitle!,
-                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w300, color: Colors.white.withValues(alpha: 0.7))),
+                          Text(
+                            subtitle!,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w300,
+                              color: Colors.white.withValues(alpha: 0.7),
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -185,7 +231,10 @@ class KanzRow extends StatelessWidget {
           ),
           Padding(
             padding: EdgeInsetsDirectional.only(end: indentSeparator ? 34 : 0),
-            child: Container(height: 1, color: separatorColor.withValues(alpha: 0.9)),
+            child: Container(
+              height: 1,
+              color: separatorColor.withValues(alpha: 0.9),
+            ),
           ),
         ],
       ),
@@ -201,14 +250,14 @@ class CircledIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white, width: 1.6),
-        ),
-        child: Icon(icon, color: Colors.white, size: size * 0.6),
-      );
+    width: size,
+    height: size,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      border: Border.all(color: Colors.white, width: 1.6),
+    ),
+    child: Icon(icon, color: Colors.white, size: size * 0.6),
+  );
 }
 
 /// أيقونة السبحة في الشريط السفلي: حبات حول دائرة.
@@ -250,16 +299,21 @@ class KanzLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Image.asset(
-        'assets/images/logo_white.png',
-        width: size,
-        height: size,
-        filterQuality: FilterQuality.medium,
-      );
+    'assets/images/logo_white.png',
+    width: size,
+    height: size,
+    filterQuality: FilterQuality.medium,
+  );
 }
 
 /// صف جدول بالشكل الأصلي (رأس السجل).
 class KanzTableHeader extends StatelessWidget {
-  const KanzTableHeader({super.key, required this.cells, this.selected, this.onTap});
+  const KanzTableHeader({
+    super.key,
+    required this.cells,
+    this.selected,
+    this.onTap,
+  });
   final List<String> cells;
   final int? selected;
   final ValueChanged<int>? onTap;
@@ -274,15 +328,21 @@ class KanzTableHeader extends StatelessWidget {
               onTap: onTap == null ? null : () => onTap!(i),
               child: Container(
                 height: 52,
-                margin: EdgeInsetsDirectional.only(end: i == cells.length - 1 ? 0 : 2),
-                color: selected == i ? KanzColors.inputBox : KanzColors.cardBlue,
+                margin: EdgeInsetsDirectional.only(
+                  end: i == cells.length - 1 ? 0 : 2,
+                ),
+                color: selected == i
+                    ? KanzColors.inputBox
+                    : KanzColors.cardBlue,
                 alignment: Alignment.center,
                 child: Text(
                   cells[i],
                   style: TextStyle(
                     fontSize: 21,
                     fontWeight: FontWeight.w300,
-                    color: selected == null || selected == i ? KanzColors.cyan : Colors.white70,
+                    color: selected == null || selected == i
+                        ? KanzColors.cyan
+                        : Colors.white70,
                   ),
                 ),
               ),

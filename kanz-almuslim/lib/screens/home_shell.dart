@@ -46,7 +46,11 @@ class _HomeShellState extends State<HomeShell> {
 }
 
 class _Footer extends StatelessWidget {
-  const _Footer({required this.index, required this.onTap, required this.labels});
+  const _Footer({
+    required this.index,
+    required this.onTap,
+    required this.labels,
+  });
   final int index;
   final ValueChanged<int> onTap;
   final List<String> labels;
@@ -55,11 +59,11 @@ class _Footer extends StatelessWidget {
   Widget build(BuildContext context) {
     final bottom = MediaQuery.of(context).padding.bottom;
     Widget icon(int i, Color c) => switch (i) {
-          0 => BeadsIcon(color: c, size: 38),
-          1 => Icon(Icons.view_list_sharp, color: c, size: 40),
-          2 => Icon(Icons.notifications_none, color: c, size: 40),
-          _ => Icon(Icons.settings, color: c, size: 40),
-        };
+      0 => BeadsIcon(color: c, size: 38),
+      1 => Icon(Icons.view_list_sharp, color: c, size: 40),
+      2 => Icon(Icons.notifications_none, color: c, size: 40),
+      _ => Icon(Icons.settings, color: c, size: 40),
+    };
     return Container(
       decoration: const BoxDecoration(
         color: KanzColors.tabBar,
@@ -79,7 +83,14 @@ class _Footer extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     SizedBox(height: 42, child: Center(child: icon(i, c))),
-                    Text(labels[i], style: TextStyle(color: c, fontSize: 14, fontWeight: FontWeight.w300)),
+                    Text(
+                      labels[i],
+                      style: TextStyle(
+                        color: c,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w300,
+                      ),
+                    ),
                   ],
                 ),
               ),

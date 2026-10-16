@@ -94,7 +94,12 @@ class KanzTheme {
       dialogTheme: const DialogThemeData(
         backgroundColor: KanzColors.bgTop,
         titleTextStyle: TextStyle(fontFamily: font, fontSize: 20, color: white),
-        contentTextStyle: TextStyle(fontFamily: font, fontSize: 16, color: white, fontWeight: FontWeight.w300),
+        contentTextStyle: TextStyle(
+          fontFamily: font,
+          fontSize: 16,
+          color: white,
+          fontWeight: FontWeight.w300,
+        ),
       ),
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: KanzColors.bgTop,
@@ -108,11 +113,17 @@ class KanzTheme {
         style: TextButton.styleFrom(foregroundColor: KanzColors.cyan),
       ),
       inputDecorationTheme: const InputDecorationTheme(
-        enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: KanzColors.separator)),
-        focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: KanzColors.cyan)),
+        enabledBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: KanzColors.separator),
+        ),
+        focusedBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: KanzColors.cyan),
+        ),
         hintStyle: TextStyle(color: Colors.white54),
       ),
-      cupertinoOverrideTheme: const CupertinoThemeData(primaryColor: KanzColors.cyan),
+      cupertinoOverrideTheme: const CupertinoThemeData(
+        primaryColor: KanzColors.cyan,
+      ),
     );
   }
 }

@@ -1,6 +1,7 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
+
+import '../platform.dart';
+
 import 'package:in_app_review/in_app_review.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -62,12 +63,16 @@ class SettingsScreen extends StatelessWidget {
           KanzRow(
             icon: const Icon(Icons.alternate_email, color: iconColor, size: 40),
             title: tr(context, 'contact'),
-            onTap: () => launchUrl(Uri.parse('mailto:$contactEmail?subject=Kanz%20Almuslim')),
+            onTap: () => launchUrl(
+              Uri.parse('mailto:$contactEmail?subject=Kanz%20Almuslim'),
+            ),
           ),
           KanzRow(
             icon: const Icon(Icons.ios_share, color: iconColor, size: 38),
             title: tr(context, 'share'),
-            onTap: () => SharePlus.instance.share(ShareParams(text: tr(context, 'shareText'))),
+            onTap: () => SharePlus.instance.share(
+              ShareParams(text: tr(context, 'shareText')),
+            ),
           ),
           KanzRow(
             icon: const KanzLogo(size: 38),
@@ -98,13 +103,25 @@ class SettingsScreen extends StatelessWidget {
           Container(height: 1, color: KanzColors.separator),
           if (cloud.available)
             KanzRow(
-              icon: const Icon(Icons.person_outline, color: iconColor, size: 40),
+              icon: const Icon(
+                Icons.person_outline,
+                color: iconColor,
+                size: 40,
+              ),
               title: tr(context, 'account'),
-              subtitle: cloud.signedIn ? cloud.displayName : tr(context, 'tapToSignIn'),
-              onTap: () => cloud.signedIn ? _push(context, const AccountScreen()) : showSignInSheet(context),
+              subtitle: cloud.signedIn
+                  ? cloud.displayName
+                  : tr(context, 'tapToSignIn'),
+              onTap: () => cloud.signedIn
+                  ? _push(context, const AccountScreen())
+                  : showSignInSheet(context),
             ),
           KanzRow(
-            icon: const Icon(Icons.emoji_events_outlined, color: iconColor, size: 40),
+            icon: const Icon(
+              Icons.emoji_events_outlined,
+              color: iconColor,
+              size: 40,
+            ),
             title: tr(context, 'ranking'),
             onTap: () {
               // بدون سيرفر: لوحة Game Center / Play Games.
@@ -119,9 +136,15 @@ class SettingsScreen extends StatelessWidget {
           ),
           if (cloud.available)
             KanzRow(
-              icon: const Icon(Icons.people_outline, color: iconColor, size: 40),
+              icon: const Icon(
+                Icons.people_outline,
+                color: iconColor,
+                size: 40,
+              ),
               title: tr(context, 'friends'),
-              onTap: () => cloud.signedIn ? _push(context, const FriendsScreen()) : showSignInSheet(context),
+              onTap: () => cloud.signedIn
+                  ? _push(context, const FriendsScreen())
+                  : showSignInSheet(context),
             ),
           KanzRow(
             icon: const BeadsIcon(color: iconColor, size: 36),
@@ -129,7 +152,11 @@ class SettingsScreen extends StatelessWidget {
             onTap: () => _push(context, const ManageDhikrScreen()),
           ),
           KanzRow(
-            icon: const Icon(Icons.volume_up_outlined, color: iconColor, size: 38),
+            icon: const Icon(
+              Icons.volume_up_outlined,
+              color: iconColor,
+              size: 38,
+            ),
             title: tr(context, 'sound'),
             indentSeparator: false,
             trailing: KanzSwitch(value: s.soundOn, onChanged: s.setSound),
@@ -138,7 +165,10 @@ class SettingsScreen extends StatelessWidget {
             icon: const Icon(Icons.vibration, color: iconColor, size: 38),
             title: tr(context, 'vibration'),
             indentSeparator: false,
-            trailing: KanzSwitch(value: s.vibrationOn, onChanged: s.setVibration),
+            trailing: KanzSwitch(
+              value: s.vibrationOn,
+              onChanged: s.setVibration,
+            ),
           ),
           const SizedBox(height: 24),
         ],
@@ -147,13 +177,16 @@ class SettingsScreen extends StatelessWidget {
   }
 
   String _hour(BuildContext context, int h) =>
-      MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay(hour: h, minute: 0));
+      MaterialLocalizations.of(context)
+          .formatTimeOfDay(TimeOfDay(hour: h, minute: 0));
 
   Future<void> _rate() async {
     final review = InAppReview.instance;
     try {
-      if (appStoreId.isNotEmpty || Platform.isAndroid) {
-        await review.openStoreListing(appStoreId: appStoreId.isEmpty ? null : appStoreId);
+      if (appStoreId.isNotEmpty || isAndroid) {
+        await review.openStoreListing(
+          appStoreId: appStoreId.isEmpty ? null : appStoreId,
+        );
       } else if (await review.isAvailable()) {
         await review.requestReview();
       }
@@ -171,10 +204,22 @@ class SettingsScreen extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            KanzRow(title: 'العربيه', chevron: false, onTap: () => Navigator.pop(ctx, 'ar'),
-                trailing: s.language == 'ar' ? const Icon(Icons.check, color: KanzColors.cyan) : null),
-            KanzRow(title: 'English', chevron: false, onTap: () => Navigator.pop(ctx, 'en'),
-                trailing: s.language == 'en' ? const Icon(Icons.check, color: KanzColors.cyan) : null),
+            KanzRow(
+              title: 'العربيه',
+              chevron: false,
+              onTap: () => Navigator.pop(ctx, 'ar'),
+              trailing: s.language == 'ar'
+                  ? const Icon(Icons.check, color: KanzColors.cyan)
+                  : null,
+            ),
+            KanzRow(
+              title: 'English',
+              chevron: false,
+              onTap: () => Navigator.pop(ctx, 'en'),
+              trailing: s.language == 'en'
+                  ? const Icon(Icons.check, color: KanzColors.cyan)
+                  : null,
+            ),
           ],
         ),
       ),

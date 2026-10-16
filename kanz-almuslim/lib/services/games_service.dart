@@ -1,6 +1,7 @@
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
+
+import '../platform.dart';
+
 import 'package:games_services/games_services.dart';
 
 /// ربط اختياري مع Game Center (iOS) و Google Play Games (Android).
@@ -26,7 +27,8 @@ class GamesService {
   bool _signedIn = false;
   bool get signedIn => _signedIn;
 
-  bool get _supported => Platform.isIOS || (Platform.isAndroid && androidLeaderboardId.isNotEmpty);
+  bool get _supported =>
+      isIOS || (isAndroid && androidLeaderboardId.isNotEmpty);
 
   Future<void> signIn() async {
     if (!_supported) return;
@@ -51,7 +53,7 @@ class GamesService {
       for (final entry in _milestones.entries) {
         if (total >= entry.key) {
           final (ios, android) = entry.value;
-          if (Platform.isAndroid && android.isEmpty) continue;
+          if (isAndroid && android.isEmpty) continue;
           await GamesServices.unlock(
             achievement: Achievement(iOSID: ios, androidID: android),
           );

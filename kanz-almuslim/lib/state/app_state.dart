@@ -67,9 +67,11 @@ class AppState extends ChangeNotifier {
     if (c == 0 || t <= 0) return c;
     return ((c - 1) % t) + 1;
   }
+
   int get todayTotal => dayTotal(dayKey(DateTime.now()));
 
-  int dayTotal(String key) => history[key]?.values.fold<int>(0, (a, b) => a + b) ?? 0;
+  int dayTotal(String key) =>
+      history[key]?.values.fold<int>(0, (a, b) => a + b) ?? 0;
 
   // -------------------------------------------------------------- التحميل
 
@@ -77,7 +79,9 @@ class AppState extends ChangeNotifier {
     final rawDhikrs = _prefs.getString('dhikrs');
     dhikrs = rawDhikrs == null
         ? defaultDhikrList()
-        : (jsonDecode(rawDhikrs) as List).map((e) => Dhikr.fromJson(e as Map<String, dynamic>)).toList();
+        : (jsonDecode(rawDhikrs) as List)
+              .map((e) => Dhikr.fromJson(e as Map<String, dynamic>))
+              .toList();
     if (dhikrs.isEmpty) dhikrs = defaultDhikrList();
 
     currentIndex = _prefs.getInt('currentIndex') ?? 0;
@@ -86,13 +90,16 @@ class AppState extends ChangeNotifier {
 
     final rawCycles = _prefs.getString('cycles');
     if (rawCycles != null) {
-      (jsonDecode(rawCycles) as Map<String, dynamic>)
-          .forEach((k, v) => cycleCounts[k] = (v as num).toInt());
+      (jsonDecode(rawCycles) as Map<String, dynamic>).forEach(
+        (k, v) => cycleCounts[k] = (v as num).toInt(),
+      );
     }
     final rawHistory = _prefs.getString('history');
     if (rawHistory != null) {
       (jsonDecode(rawHistory) as Map<String, dynamic>).forEach((day, v) {
-        history[day] = (v as Map<String, dynamic>).map((k, c) => MapEntry(k, (c as num).toInt()));
+        history[day] = (v as Map<String, dynamic>).map(
+          (k, c) => MapEntry(k, (c as num).toInt()),
+        );
       });
     }
 
@@ -112,8 +119,8 @@ class AppState extends ChangeNotifier {
     customReminders = rawCustom == null
         ? []
         : (jsonDecode(rawCustom) as List)
-            .map((e) => CustomReminder.fromJson(e as Map<String, dynamic>))
-            .toList();
+              .map((e) => CustomReminder.fromJson(e as Map<String, dynamic>))
+              .toList();
   }
 
   // --------------------------------------------------------------- الحفظ
@@ -125,7 +132,10 @@ class AppState extends ChangeNotifier {
   }
 
   void _saveDhikrs() {
-    _prefs.setString('dhikrs', jsonEncode(dhikrs.map((d) => d.toJson()).toList()));
+    _prefs.setString(
+      'dhikrs',
+      jsonEncode(dhikrs.map((d) => d.toJson()).toList()),
+    );
     _prefs.setInt('currentIndex', currentIndex);
   }
 
@@ -137,7 +147,10 @@ class AppState extends ChangeNotifier {
     _prefs.setInt('dndStartHour', dndStartHour);
     _prefs.setInt('dndEndHour', dndEndHour);
     _prefs.setBool('reminderSound', reminderSound);
-    _prefs.setString('customReminders', jsonEncode(customReminders.map((r) => r.toJson()).toList()));
+    _prefs.setString(
+      'customReminders',
+      jsonEncode(customReminders.map((r) => r.toJson()).toList()),
+    );
   }
 
   // -------------------------------------------------------------- التسبيح
@@ -197,11 +210,13 @@ class AppState extends ChangeNotifier {
   // ------------------------------------------------------- إدارة الأذكار
 
   void addDhikr(String text, int target) {
-    dhikrs.add(Dhikr(
-      id: 'u${DateTime.now().microsecondsSinceEpoch}',
-      text: text.trim(),
-      target: target,
-    ));
+    dhikrs.add(
+      Dhikr(
+        id: 'u${DateTime.now().microsecondsSinceEpoch}',
+        text: text.trim(),
+        target: target,
+      ),
+    );
     _saveDhikrs();
     notifyListeners();
   }
@@ -278,23 +293,29 @@ class AppState extends ChangeNotifier {
   // -------------------------------------------------------------- التذكير
 
   ReminderSettings get reminderSettings => ReminderSettings(
-        streams: [
-          if (autoReminder) ReminderStream(intervalMinutes: autoInterval),
-          if (customReminderOn)
-            for (final r in customReminders.where((r) => r.enabled))
-              ReminderStream(intervalMinutes: r.intervalMinutes, text: r.text, sound: r.sound),
-        ],
-        dnd: dnd,
-        dndStartHour: dndStartHour,
-        dndEndHour: dndEndHour,
-        withDhikrSound: reminderSound,
-      );
+    streams: [
+      if (autoReminder) ReminderStream(intervalMinutes: autoInterval),
+      if (customReminderOn)
+        for (final r in customReminders.where((r) => r.enabled))
+          ReminderStream(
+            intervalMinutes: r.intervalMinutes,
+            text: r.text,
+            sound: r.sound,
+          ),
+    ],
+    dnd: dnd,
+    dndStartHour: dndStartHour,
+    dndEndHour: dndEndHour,
+    withDhikrSound: reminderSound,
+  );
 
   bool get anyReminderOn =>
-      autoReminder || (customReminderOn && customReminders.any((r) => r.enabled));
+      autoReminder ||
+      (customReminderOn && customReminders.any((r) => r.enabled));
 
   /// يعيد بناء جدول التنبيهات كاملاً (يلغي القديم أولاً).
-  Future<void> applyReminders() => NotificationService.instance.rescheduleAll(reminderSettings);
+  Future<void> applyReminders() =>
+      NotificationService.instance.rescheduleAll(reminderSettings);
 
   Future<void> updateReminders({
     bool? auto,
@@ -319,13 +340,22 @@ class AppState extends ChangeNotifier {
     await applyReminders();
   }
 
-  Future<void> addCustomReminder(String text, String? sound, int intervalMinutes) async {
-    customReminders.add(CustomReminder(
-      id: 'c${DateTime.now().microsecondsSinceEpoch}',
-      text: text,
-      sound: sound,
-      intervalMinutes: intervalMinutes.clamp(NotificationService.minInterval, 24 * 60),
-    ));
+  Future<void> addCustomReminder(
+    String text,
+    String? sound,
+    int intervalMinutes,
+  ) async {
+    customReminders.add(
+      CustomReminder(
+        id: 'c${DateTime.now().microsecondsSinceEpoch}',
+        text: text,
+        sound: sound,
+        intervalMinutes: intervalMinutes.clamp(
+          NotificationService.minInterval,
+          24 * 60,
+        ),
+      ),
+    );
     customReminderOn = true;
     _saveReminders();
     notifyListeners();

@@ -1,6 +1,7 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
+
+import '../platform.dart';
+
 import 'package:provider/provider.dart';
 
 import '../l10n.dart';
@@ -49,7 +50,9 @@ class _SignInSheetState extends State<_SignInSheet> {
   @override
   Widget build(BuildContext context) {
     final cloud = CloudService.instance;
-    final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(8));
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(8),
+    );
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(28, 0, 28, 24),
@@ -62,15 +65,22 @@ class _SignInSheetState extends State<_SignInSheet> {
             Text(
               tr(context, 'signInToCompete'),
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w300, color: Colors.white),
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w300,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(height: 22),
             if (_busy)
               const Center(
-                child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator(color: KanzColors.cyan)),
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: CircularProgressIndicator(color: KanzColors.cyan),
+                ),
               )
             else ...[
-              if (Platform.isIOS) ...[
+              if (isIOS) ...[
                 FilledButton.icon(
                   style: FilledButton.styleFrom(
                     backgroundColor: Colors.white,
@@ -80,7 +90,10 @@ class _SignInSheetState extends State<_SignInSheet> {
                   ),
                   onPressed: () => _run(cloud.signInWithApple),
                   icon: const Icon(Icons.apple, size: 26),
-                  label: Text(tr(context, 'signInApple'), style: const TextStyle(fontSize: 17)),
+                  label: Text(
+                    tr(context, 'signInApple'),
+                    style: const TextStyle(fontSize: 17),
+                  ),
                 ),
                 const SizedBox(height: 12),
               ],
@@ -92,8 +105,14 @@ class _SignInSheetState extends State<_SignInSheet> {
                   shape: shape,
                 ),
                 onPressed: () => _run(cloud.signInWithGoogle),
-                icon: const Text('G', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
-                label: Text(tr(context, 'signInGoogle'), style: const TextStyle(fontSize: 17)),
+                icon: const Text(
+                  'G',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+                ),
+                label: Text(
+                  tr(context, 'signInGoogle'),
+                  style: const TextStyle(fontSize: 17),
+                ),
               ),
             ],
           ],

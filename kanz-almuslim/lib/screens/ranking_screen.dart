@@ -1,6 +1,7 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
+
+import '../platform.dart';
+
 import 'package:provider/provider.dart';
 
 import '../l10n.dart';
@@ -19,7 +20,12 @@ class RankingScreen extends StatefulWidget {
 }
 
 class _RankingScreenState extends State<RankingScreen> {
-  static const _periods = [RankPeriod.day, RankPeriod.week, RankPeriod.month, RankPeriod.all];
+  static const _periods = [
+    RankPeriod.day,
+    RankPeriod.week,
+    RankPeriod.month,
+    RankPeriod.all,
+  ];
   int _period = 0;
   bool _friends = false;
   late Future<List<RankEntry>> _future;
@@ -33,20 +39,30 @@ class _RankingScreenState extends State<RankingScreen> {
   void _load() {
     final cloud = CloudService.instance;
     final p = _periods[_period];
-    _future = cloud.flush().then((_) => _friends ? cloud.friendsRanking(p) : cloud.worldRanking(p));
+    _future = cloud.flush().then(
+      (_) => _friends ? cloud.friendsRanking(p) : cloud.worldRanking(p),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final cloud = context.watch<CloudService>();
-    const style = TextStyle(fontSize: 19, fontWeight: FontWeight.w300, color: Colors.white);
+    const style = TextStyle(
+      fontSize: 19,
+      fontWeight: FontWeight.w300,
+      color: Colors.white,
+    );
     return KanzPage(
       title: tr(context, 'ranking'),
       showBack: true,
       action: IconButton(
-        tooltip: tr(context, Platform.isIOS ? 'gameCenter' : 'playGames'),
+        tooltip: tr(context, isIOS ? 'gameCenter' : 'playGames'),
         onPressed: GamesService.instance.showLeaderboard,
-        icon: const Icon(Icons.sports_esports_outlined, color: Colors.white, size: 30),
+        icon: const Icon(
+          Icons.sports_esports_outlined,
+          color: Colors.white,
+          size: 30,
+        ),
       ),
       body: Column(
         children: [
@@ -60,7 +76,12 @@ class _RankingScreenState extends State<RankingScreen> {
           ),
           const SizedBox(height: 2),
           KanzTableHeader(
-            cells: [tr(context, 'today'), tr(context, 'thisWeek'), tr(context, 'thisMonth'), tr(context, 'allTime')],
+            cells: [
+              tr(context, 'today'),
+              tr(context, 'thisWeek'),
+              tr(context, 'thisMonth'),
+              tr(context, 'allTime'),
+            ],
             selected: _period,
             onTap: (i) => setState(() {
               _period = i;
@@ -72,14 +93,22 @@ class _RankingScreenState extends State<RankingScreen> {
               future: _future,
               builder: (context, snap) {
                 if (snap.connectionState != ConnectionState.done) {
-                  return const Center(child: CircularProgressIndicator(color: KanzColors.cyan));
+                  return const Center(
+                    child: CircularProgressIndicator(color: KanzColors.cyan),
+                  );
                 }
                 if (snap.hasError) {
                   debugPrint('Ranking error: ${snap.error}');
-                  return Center(child: Text(tr(context, 'error'), style: style));
+                  return Center(
+                    child: Text(tr(context, 'error'), style: style),
+                  );
                 }
                 final list = snap.data ?? [];
-                if (list.isEmpty) return Center(child: Text(tr(context, 'noOneYet'), style: style));
+                if (list.isEmpty) {
+                  return Center(
+                    child: Text(tr(context, 'noOneYet'), style: style),
+                  );
+                }
                 return RefreshIndicator(
                   onRefresh: () async {
                     setState(_load);
@@ -99,22 +128,41 @@ class _RankingScreenState extends State<RankingScreen> {
                       };
                       return Container(
                         height: 50,
-                        color: me ? KanzColors.cardBlue.withValues(alpha: 0.6) : null,
+                        color: me
+                            ? KanzColors.cardBlue.withValues(alpha: 0.6)
+                            : null,
                         padding: const EdgeInsets.symmetric(horizontal: 18),
                         child: Row(
                           children: [
                             SizedBox(
                               width: 40,
                               child: medal != null
-                                  ? Icon(Icons.emoji_events, color: medal, size: 28)
-                                  : Text('${i + 1}', style: style, textAlign: TextAlign.center),
+                                  ? Icon(
+                                      Icons.emoji_events,
+                                      color: medal,
+                                      size: 28,
+                                    )
+                                  : Text(
+                                      '${i + 1}',
+                                      style: style,
+                                      textAlign: TextAlign.center,
+                                    ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
-                              child: Text(me ? '${e.name} (${tr(context, 'you')})' : e.name,
-                                  style: style, maxLines: 1, overflow: TextOverflow.ellipsis),
+                              child: Text(
+                                me
+                                    ? '${e.name} (${tr(context, 'you')})'
+                                    : e.name,
+                                style: style,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                            Text('${e.score}', style: style.copyWith(color: KanzColors.cyan)),
+                            Text(
+                              '${e.score}',
+                              style: style.copyWith(color: KanzColors.cyan),
+                            ),
                           ],
                         ),
                       );

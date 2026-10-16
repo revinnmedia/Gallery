@@ -1,5 +1,6 @@
-import 'dart:io';
 import 'dart:math';
+
+import '../platform.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -58,7 +59,7 @@ class NotificationService {
   bool _ready = false;
 
   /// حد iOS هو ٦٤ تنبيهاً مجدولاً، نترك هامشاً. أندرويد يسمح بأكثر.
-  static int get maxPending => Platform.isIOS ? 60 : 200;
+  static int get maxPending => isIOS ? 60 : 200;
   static const _idBase = 100;
 
   /// أقل مدة بين تنبيهين لنفس المصدر.
@@ -92,14 +93,23 @@ class NotificationService {
   /// يطلب إذن التنبيهات. يرجع true إذا وافق المستخدم.
   Future<bool> requestPermission() async {
     await init();
-    if (Platform.isIOS) {
-      final ios = _plugin.resolvePlatformSpecificImplementation<
-          IOSFlutterLocalNotificationsPlugin>();
-      return await ios?.requestPermissions(alert: true, sound: true, badge: false) ?? false;
+    if (isIOS) {
+      final ios = _plugin
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >();
+      return await ios?.requestPermissions(
+            alert: true,
+            sound: true,
+            badge: false,
+          ) ??
+          false;
     }
-    if (Platform.isAndroid) {
-      final android = _plugin.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+    if (isAndroid) {
+      final android = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       return await android?.requestNotificationsPermission() ?? false;
     }
     return false;

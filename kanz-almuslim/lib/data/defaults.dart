@@ -3,17 +3,47 @@ import '../models.dart';
 /// التسابيح الافتراضية من النسخة الأصلية، بنفس ملفات الصوت.
 /// أسماء الأصوات ومصادرها الأصلية في tool/sounds.json.
 List<Dhikr> defaultDhikrList() => [
-      Dhikr(id: 'd1', text: 'سبحان الله', sound: 'subhanallah', builtIn: true),
-      Dhikr(id: 'd2', text: 'الحمد لله', sound: 'alhamdulillah', builtIn: true),
-      Dhikr(id: 'd3', text: 'لا إله إلا الله', sound: 'la_ilaha_illallah', builtIn: true),
-      Dhikr(id: 'd4', text: 'الله أكبر', sound: 'allahu_akbar', builtIn: true),
-      Dhikr(id: 'd5', text: 'سبحان الله وبحمده', sound: 'subhanallah_wabihamdihi', builtIn: true),
-      Dhikr(id: 'd6', text: 'سبحان الله العظيم', sound: 'subhanallah_alazim', builtIn: true),
-      Dhikr(id: 'd7', text: 'أستغفر الله', sound: 'astaghfirullah', builtIn: true),
-      Dhikr(id: 'd8', text: 'لا حول ولا قوة إلا بالله', sound: 'la_hawla', builtIn: true),
-      Dhikr(id: 'd9', text: 'حسبي الله ونعم الوكيل', sound: 'hasbiyallah', builtIn: true),
-      Dhikr(id: 'd10', text: 'عليه الصلاة والسلام', sound: 'alayhi_assalat', builtIn: true),
-    ];
+  Dhikr(id: 'd1', text: 'سبحان الله', sound: 'subhanallah', builtIn: true),
+  Dhikr(id: 'd2', text: 'الحمد لله', sound: 'alhamdulillah', builtIn: true),
+  Dhikr(
+    id: 'd3',
+    text: 'لا إله إلا الله',
+    sound: 'la_ilaha_illallah',
+    builtIn: true,
+  ),
+  Dhikr(id: 'd4', text: 'الله أكبر', sound: 'allahu_akbar', builtIn: true),
+  Dhikr(
+    id: 'd5',
+    text: 'سبحان الله وبحمده',
+    sound: 'subhanallah_wabihamdihi',
+    builtIn: true,
+  ),
+  Dhikr(
+    id: 'd6',
+    text: 'سبحان الله العظيم',
+    sound: 'subhanallah_alazim',
+    builtIn: true,
+  ),
+  Dhikr(id: 'd7', text: 'أستغفر الله', sound: 'astaghfirullah', builtIn: true),
+  Dhikr(
+    id: 'd8',
+    text: 'لا حول ولا قوة إلا بالله',
+    sound: 'la_hawla',
+    builtIn: true,
+  ),
+  Dhikr(
+    id: 'd9',
+    text: 'حسبي الله ونعم الوكيل',
+    sound: 'hasbiyallah',
+    builtIn: true,
+  ),
+  Dhikr(
+    id: 'd10',
+    text: 'عليه الصلاة والسلام',
+    sound: 'alayhi_assalat',
+    builtIn: true,
+  ),
+];
 
 /// عبارات التذكير العشوائي من النسخة الأصلية.
 const reminderPhrases = <ReminderPhrase>[

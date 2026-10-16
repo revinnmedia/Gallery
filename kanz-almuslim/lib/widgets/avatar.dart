@@ -16,7 +16,10 @@ class Avatar extends StatelessWidget {
       radius: radius,
       backgroundColor: KanzColors.inputBox,
       foregroundColor: Colors.white,
-      child: Text(initial, style: TextStyle(fontSize: radius * 0.8, fontWeight: FontWeight.w700)),
+      child: Text(
+        initial,
+        style: TextStyle(fontSize: radius * 0.8, fontWeight: FontWeight.w700),
+      ),
     );
     if (url == null || url!.isEmpty) return fallback;
     return ClipOval(

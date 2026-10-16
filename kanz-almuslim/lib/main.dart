@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -17,15 +18,21 @@ Future<void> main() async {
   final prefs = await SharedPreferences.getInstance();
   final state = AppState(prefs);
 
-  await NotificationService.instance.init();
+  try {
+    await NotificationService.instance.init();
+  } catch (e) {
+    debugPrint('Notifications unavailable: $e');
+  }
   await CloudService.instance.init();
 
   // نعيد بناء جدول التنبيهات عند كل فتح، بعد إلغاء القديم بالكامل.
   // هذا يجدّد التذكير العشوائي ولا يكرره أبداً.
-  if (state.anyReminderOn) {
-    state.applyReminders();
-  } else {
-    NotificationService.instance.cancelAll();
+  if (!kIsWeb) {
+    if (state.anyReminderOn) {
+      state.applyReminders();
+    } else {
+      NotificationService.instance.cancelAll();
+    }
   }
 
   GamesService.instance.signIn();

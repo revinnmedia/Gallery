@@ -32,7 +32,10 @@ class _TasbeehScreenState extends State<TasbeehScreen> {
   Future<void> _celebrate() async {
     _celebrating = true;
     final total = context.read<AppState>().total;
-    await showDialog<void>(context: context, builder: (_) => _HundredDialog(total: total));
+    await showDialog<void>(
+      context: context,
+      builder: (_) => _HundredDialog(total: total),
+    );
     _celebrating = false;
   }
 
@@ -52,7 +55,9 @@ class _TasbeehScreenState extends State<TasbeehScreen> {
 
     return KanzPage(
       title: tr(context, 'appName'),
-      onHeart: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SupportScreen())),
+      onHeart: () =>
+          Navigator.of(context)
+              .push(MaterialPageRoute(builder: (_) => const SupportScreen())),
       body: Column(
         children: [
           const _UserCard(),
@@ -68,7 +73,10 @@ class _TasbeehScreenState extends State<TasbeehScreen> {
                 textDirection: TextDirection.ltr,
                 child: Row(
                   children: [
-                    _Arrow(icon: Icons.arrow_back_ios_new, onTap: () => _step(-1)),
+                    _Arrow(
+                      icon: Icons.arrow_back_ios_new,
+                      onTap: () => _step(-1),
+                    ),
                     Expanded(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 10),
@@ -88,7 +96,9 @@ class _TasbeehScreenState extends State<TasbeehScreen> {
                               ),
                               const SizedBox(height: 8),
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 40),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 40,
+                                ),
                                 child: Text(
                                   d.text,
                                   textAlign: TextAlign.center,
@@ -105,7 +115,10 @@ class _TasbeehScreenState extends State<TasbeehScreen> {
                         ),
                       ),
                     ),
-                    _Arrow(icon: Icons.arrow_forward_ios, onTap: () => _step(1)),
+                    _Arrow(
+                      icon: Icons.arrow_forward_ios,
+                      onTap: () => _step(1),
+                    ),
                   ],
                 ),
               ),
@@ -129,7 +142,9 @@ class _UserCard extends StatelessWidget {
     final s = context.watch<AppState>();
     final cloud = context.watch<CloudService>();
     final name = cloud.signedIn ? cloud.displayName : tr(context, 'guest');
-    final sub = s.premium ? tr(context, 'premiumMember') : tr(context, 'normalMember');
+    final sub = s.premium
+        ? tr(context, 'premiumMember')
+        : tr(context, 'normalMember');
     return GestureDetector(
       onTap: () {
         // بدون سيرفر: لوحة Game Center / Play Games مباشرة.
@@ -138,7 +153,8 @@ class _UserCard extends StatelessWidget {
           return;
         }
         if (cloud.signedIn) {
-          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const RankingScreen()));
+          Navigator.of(context)
+              .push(MaterialPageRoute(builder: (_) => const RankingScreen()));
         } else {
           showSignInSheet(context);
         }
@@ -146,7 +162,10 @@ class _UserCard extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.fromLTRB(10, 10, 10, 0),
         height: 56,
-        decoration: BoxDecoration(color: KanzColors.cardBlue, borderRadius: BorderRadius.circular(8)),
+        decoration: BoxDecoration(
+          color: KanzColors.cardBlue,
+          borderRadius: BorderRadius.circular(8),
+        ),
         child: Row(
           children: [
             Expanded(
@@ -155,11 +174,24 @@ class _UserCard extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w300, color: Colors.white)),
-                    Text(sub, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w300, color: Colors.white)),
+                    Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w300,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      sub,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w300,
+                        color: Colors.white,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -174,9 +206,19 @@ class _UserCard extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.emoji_events, color: KanzColors.gold, size: 30),
-                    Text('${s.total}',
-                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w300, color: Colors.white)),
+                    const Icon(
+                      Icons.emoji_events,
+                      color: KanzColors.gold,
+                      size: 30,
+                    ),
+                    Text(
+                      '${s.total}',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w300,
+                        color: Colors.white,
+                      ),
+                    ),
                     const SizedBox(width: 6),
                   ],
                 ),
@@ -196,11 +238,11 @@ class _Arrow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => IconButton(
-        onPressed: onTap,
-        padding: EdgeInsets.zero,
-        constraints: const BoxConstraints(minWidth: 40, minHeight: 60),
-        icon: Icon(icon, color: Colors.white, size: 30),
-      );
+    onPressed: onTap,
+    padding: EdgeInsets.zero,
+    constraints: const BoxConstraints(minWidth: 40, minHeight: 60),
+    icon: Icon(icon, color: Colors.white, size: 30),
+  );
 }
 
 /// نقاط الصفحات: الحالية بيضاء والباقي فيروزي.
@@ -266,18 +308,44 @@ class _HundredDialog extends StatelessWidget {
                         backgroundColor: Colors.white12,
                       ),
                     ),
-                    const Text('100', style: TextStyle(fontSize: 44, fontWeight: FontWeight.w200, color: Colors.white)),
+                    const Text(
+                      '100',
+                      style: TextStyle(
+                        fontSize: 44,
+                        fontWeight: FontWeight.w200,
+                        color: Colors.white,
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 18),
-            Text(tr(context, 'congrats'), style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w300, color: Colors.white)),
-            Text('${tr(context, 'youGot')} 100 ${tr(context, 'points')}',
-                style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w300, color: KanzColors.cyan)),
+            Text(
+              tr(context, 'congrats'),
+              style: const TextStyle(
+                fontSize: 30,
+                fontWeight: FontWeight.w300,
+                color: Colors.white,
+              ),
+            ),
+            Text(
+              '${tr(context, 'youGot')} 100 ${tr(context, 'points')}',
+              style: const TextStyle(
+                fontSize: 19,
+                fontWeight: FontWeight.w300,
+                color: KanzColors.cyan,
+              ),
+            ),
             const SizedBox(height: 6),
-            Text(tr(context, 'congratsBody', args: {'n': '$total'}),
-                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w300, color: Colors.white)),
+            Text(
+              tr(context, 'congratsBody', args: {'n': '$total'}),
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w300,
+                color: Colors.white,
+              ),
+            ),
             const SizedBox(height: 20),
             TextButton(
               onPressed: () => Navigator.of(context).pop(),

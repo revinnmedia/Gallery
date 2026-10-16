@@ -19,7 +19,9 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final _ctrl = TextEditingController();
-  late final Stream<List<ChatMessage>> _stream = CloudService.instance.messages(widget.friend.uid);
+  late final Stream<List<ChatMessage>> _stream = CloudService.instance.messages(
+    widget.friend.uid,
+  );
 
   @override
   void dispose() {
@@ -62,20 +64,41 @@ class _ChatScreenState extends State<ChatScreen> {
                     final m = msgs[i];
                     final mine = m.from == me;
                     return Align(
-                      alignment: mine ? AlignmentDirectional.centerStart : AlignmentDirectional.centerEnd,
+                      alignment: mine
+                          ? AlignmentDirectional.centerStart
+                          : AlignmentDirectional.centerEnd,
                       child: Container(
-                        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+                        constraints: BoxConstraints(
+                          maxWidth: MediaQuery.of(context).size.width * 0.75,
+                        ),
                         margin: const EdgeInsets.symmetric(vertical: 3),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 9,
+                        ),
                         decoration: BoxDecoration(
-                          color: mine ? KanzColors.cardBlue : KanzColors.inputBox,
+                          color: mine
+                              ? KanzColors.cardBlue
+                              : KanzColors.inputBox,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Text(m.text, style: const TextStyle(color: Colors.white, fontSize: 17)),
-                            Text(timeFmt.format(m.at), style: const TextStyle(fontSize: 10, color: Colors.white60)),
+                            Text(
+                              m.text,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 17,
+                              ),
+                            ),
+                            Text(
+                              timeFmt.format(m.at),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: Colors.white60,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -118,11 +141,17 @@ class _ChatScreenState extends State<ChatScreen> {
                             borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide.none,
                           ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
                         ),
                       ),
                     ),
-                    IconButton(onPressed: _send, icon: const Icon(Icons.send, color: KanzColors.cyan)),
+                    IconButton(
+                      onPressed: _send,
+                      icon: const Icon(Icons.send, color: KanzColors.cyan),
+                    ),
                   ],
                 ),
               ),

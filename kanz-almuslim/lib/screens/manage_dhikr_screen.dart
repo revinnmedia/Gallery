@@ -20,7 +20,11 @@ class ManageDhikrScreen extends StatelessWidget {
       action: IconButton(
         tooltip: tr(context, 'addDhikr'),
         onPressed: () => _edit(context, null),
-        icon: const Icon(Icons.add_circle_outline, color: Colors.white, size: 32),
+        icon: const Icon(
+          Icons.add_circle_outline,
+          color: Colors.white,
+          size: 32,
+        ),
       ),
       body: ReorderableListView.builder(
         padding: EdgeInsets.zero,
@@ -31,7 +35,9 @@ class ManageDhikrScreen extends StatelessWidget {
           final d = s.dhikrs[i];
           return Container(
             key: ValueKey(d.id),
-            color: i == s.currentIndex ? KanzColors.cardBlue.withValues(alpha: 0.5) : Colors.transparent,
+            color: i == s.currentIndex
+                ? KanzColors.cardBlue.withValues(alpha: 0.5)
+                : Colors.transparent,
             child: KanzRow(
               title: d.text,
               subtitle: '${d.target}',
@@ -46,11 +52,17 @@ class ManageDhikrScreen extends StatelessWidget {
                 children: [
                   IconButton(
                     onPressed: () => _edit(context, d),
-                    icon: const Icon(Icons.edit_outlined, color: Colors.white70),
+                    icon: const Icon(
+                      Icons.edit_outlined,
+                      color: Colors.white70,
+                    ),
                   ),
                   IconButton(
                     onPressed: () => _delete(context, d),
-                    icon: const Icon(Icons.remove_circle_outline, color: Colors.white70),
+                    icon: const Icon(
+                      Icons.remove_circle_outline,
+                      color: Colors.white70,
+                    ),
                   ),
                   ReorderableDragStartListener(
                     index: i,
@@ -77,14 +89,22 @@ class ManageDhikrScreen extends StatelessWidget {
         title: Text(d.text),
         content: Text(tr(context, 'deleteConfirm')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr(context, 'cancel'))),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr(context, 'delete'))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(tr(context, 'cancel')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(tr(context, 'delete')),
+          ),
         ],
       ),
     );
     if (ok != true) return;
     if (!s.deleteDhikr(d)) {
-      messenger.showSnackBar(SnackBar(content: Text(trLang(s.language, 'cantDeleteLast'))));
+      messenger.showSnackBar(
+        SnackBar(content: Text(trLang(s.language, 'cantDeleteLast'))),
+      );
     }
   }
 
@@ -98,13 +118,21 @@ class ManageDhikrScreen extends StatelessWidget {
       showDragHandle: true,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheet) => Padding(
-          padding: EdgeInsets.fromLTRB(24, 0, 24, MediaQuery.of(ctx).viewInsets.bottom + 24),
+          padding: EdgeInsets.fromLTRB(
+            24,
+            0,
+            24,
+            MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(tr(context, d == null ? 'addDhikr' : 'editDhikr'),
-                  textAlign: TextAlign.center, style: const TextStyle(fontSize: 22, color: Colors.white)),
+              Text(
+                tr(context, d == null ? 'addDhikr' : 'editDhikr'),
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 22, color: Colors.white),
+              ),
               const SizedBox(height: 12),
               TextField(
                 controller: text,
@@ -115,7 +143,10 @@ class ManageDhikrScreen extends StatelessWidget {
                 decoration: InputDecoration(hintText: tr(context, 'dhikrText')),
               ),
               const SizedBox(height: 8),
-              Text(tr(context, 'cycleOf'), style: const TextStyle(color: Colors.white70)),
+              Text(
+                tr(context, 'cycleOf'),
+                style: const TextStyle(color: Colors.white70),
+              ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -143,7 +174,10 @@ class ManageDhikrScreen extends StatelessWidget {
                   if (text.text.trim().isEmpty) return;
                   Navigator.pop(ctx, true);
                 },
-                child: Text(tr(context, 'save'), style: const TextStyle(color: Colors.white, fontSize: 18)),
+                child: Text(
+                  tr(context, 'save'),
+                  style: const TextStyle(color: Colors.white, fontSize: 18),
+                ),
               ),
             ],
           ),

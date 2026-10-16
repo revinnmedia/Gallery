@@ -20,20 +20,30 @@ class FriendsScreen extends StatefulWidget {
 }
 
 class _FriendsScreenState extends State<FriendsScreen> {
-  late final Stream<List<FriendRequest>> _requests = CloudService.instance.incomingRequests();
-  late final Stream<List<RankEntry>> _friends = CloudService.instance.friendsStream();
+  late final Stream<List<FriendRequest>> _requests = CloudService.instance
+      .incomingRequests();
+  late final Stream<List<RankEntry>> _friends = CloudService.instance
+      .friendsStream();
 
   @override
   Widget build(BuildContext context) {
     final cloud = context.watch<CloudService>();
-    const style = TextStyle(fontSize: 19, fontWeight: FontWeight.w300, color: Colors.white);
+    const style = TextStyle(
+      fontSize: 19,
+      fontWeight: FontWeight.w300,
+      color: Colors.white,
+    );
     return KanzPage(
       title: tr(context, 'friends'),
       showBack: true,
       action: IconButton(
         tooltip: tr(context, 'addFriend'),
         onPressed: () => _addFriend(context),
-        icon: const Icon(Icons.person_add_alt_1_outlined, color: Colors.white, size: 30),
+        icon: const Icon(
+          Icons.person_add_alt_1_outlined,
+          color: Colors.white,
+          size: 30,
+        ),
       ),
       body: ListView(
         padding: EdgeInsets.zero,
@@ -41,25 +51,39 @@ class _FriendsScreenState extends State<FriendsScreen> {
           Container(
             margin: const EdgeInsets.all(10),
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-            decoration: BoxDecoration(color: KanzColors.cardBlue, borderRadius: BorderRadius.circular(8)),
+            decoration: BoxDecoration(
+              color: KanzColors.cardBlue,
+              borderRadius: BorderRadius.circular(8),
+            ),
             child: Row(
               children: [
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(tr(context, 'myCode'), style: style.copyWith(fontSize: 14)),
+                      Text(
+                        tr(context, 'myCode'),
+                        style: style.copyWith(fontSize: 14),
+                      ),
                       Directionality(
                         textDirection: TextDirection.ltr,
-                        child: Text(cloud.friendCode ?? '······',
-                            style: const TextStyle(fontSize: 28, letterSpacing: 6, color: Colors.white)),
+                        child: Text(
+                          cloud.friendCode ?? '······',
+                          style: const TextStyle(
+                            fontSize: 28,
+                            letterSpacing: 6,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
                 if (cloud.friendCode != null)
                   IconButton(
-                    onPressed: () => Clipboard.setData(ClipboardData(text: cloud.friendCode!)),
+                    onPressed: () => Clipboard.setData(
+                      ClipboardData(text: cloud.friendCode!),
+                    ),
                     icon: const Icon(Icons.copy, color: Colors.white),
                   ),
               ],
@@ -83,11 +107,18 @@ class _FriendsScreenState extends State<FriendsScreen> {
                         children: [
                           IconButton(
                             onPressed: () => cloud.declineRequest(r),
-                            icon: const Icon(Icons.close, color: Colors.white70),
+                            icon: const Icon(
+                              Icons.close,
+                              color: Colors.white70,
+                            ),
                           ),
                           IconButton(
                             onPressed: () => cloud.acceptRequest(r),
-                            icon: const Icon(Icons.check_circle, color: KanzColors.switchGreen, size: 32),
+                            icon: const Icon(
+                              Icons.check_circle,
+                              color: KanzColors.switchGreen,
+                              size: 32,
+                            ),
                           ),
                         ],
                       ),
@@ -102,14 +133,20 @@ class _FriendsScreenState extends State<FriendsScreen> {
               if (!snap.hasData) {
                 return const Padding(
                   padding: EdgeInsets.all(30),
-                  child: Center(child: CircularProgressIndicator(color: KanzColors.cyan)),
+                  child: Center(
+                    child: CircularProgressIndicator(color: KanzColors.cyan),
+                  ),
                 );
               }
               final friends = snap.data!;
               if (friends.isEmpty) {
                 return Padding(
                   padding: const EdgeInsets.all(30),
-                  child: Text(tr(context, 'noFriends'), style: style, textAlign: TextAlign.center),
+                  child: Text(
+                    tr(context, 'noFriends'),
+                    style: style,
+                    textAlign: TextAlign.center,
+                  ),
                 );
               }
               return Column(
@@ -121,8 +158,11 @@ class _FriendsScreenState extends State<FriendsScreen> {
                         icon: Avatar(name: f.name, url: f.photoUrl),
                         title: f.name,
                         subtitle: '${f.score}',
-                        onTap: () => Navigator.of(context)
-                            .push(MaterialPageRoute(builder: (_) => ChatScreen(friend: f))),
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => ChatScreen(friend: f),
+                          ),
+                        ),
                       ),
                     ),
                 ],
@@ -141,8 +181,14 @@ class _FriendsScreenState extends State<FriendsScreen> {
         title: Text(f.name),
         content: Text(tr(context, 'removeFriend')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(tr(context, 'cancel'))),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(tr(context, 'removeFriend'))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(tr(context, 'cancel')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(tr(context, 'removeFriend')),
+          ),
         ],
       ),
     );
@@ -167,8 +213,14 @@ class _FriendsScreenState extends State<FriendsScreen> {
           decoration: InputDecoration(hintText: tr(context, 'enterCode')),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr(context, 'cancel'))),
-          TextButton(onPressed: () => Navigator.pop(ctx, ctrl.text), child: Text(tr(context, 'send'))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(tr(context, 'cancel')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, ctrl.text),
+            child: Text(tr(context, 'send')),
+          ),
         ],
       ),
     );
@@ -176,7 +228,11 @@ class _FriendsScreenState extends State<FriendsScreen> {
     if (code == null || code.trim().isEmpty) return;
     try {
       final ok = await CloudService.instance.sendFriendRequest(code);
-      messenger.showSnackBar(SnackBar(content: Text(trLang(lang, ok ? 'requestSent' : 'codeNotFound'))));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(trLang(lang, ok ? 'requestSent' : 'codeNotFound')),
+        ),
+      );
     } catch (e) {
       debugPrint('Friend request failed: $e');
       messenger.showSnackBar(SnackBar(content: Text(trLang(lang, 'error'))));

@@ -1,5 +1,7 @@
 import 'dart:async';
-import 'dart:io';
+
+import '../platform.dart';
+
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -13,7 +15,11 @@ import '../models.dart';
 enum RankPeriod { day, week, month, all }
 
 class FriendRequest {
-  const FriendRequest({required this.id, required this.fromUid, required this.fromName});
+  const FriendRequest({
+    required this.id,
+    required this.fromUid,
+    required this.fromName,
+  });
   final String id;
   final String fromUid;
   final String fromName;
@@ -52,6 +58,8 @@ class CloudService extends ChangeNotifier {
   String? get friendCode => profile?['code'] as String?;
 
   Future<void> init() async {
+    // نسخة المتصفح للتجربة فقط: بدون سيرفر.
+    if (kIsWeb) return;
     try {
       await Firebase.initializeApp();
       available = true;
@@ -86,7 +94,9 @@ class CloudService extends ChangeNotifier {
     final name = cred.user?.displayName;
     if (cred.user != null && (name == null || name.isEmpty)) {
       final given = cred.additionalUserInfo?.profile?['name'];
-      if (given is String && given.isNotEmpty) await cred.user!.updateDisplayName(given);
+      if (given is String && given.isNotEmpty) {
+        await cred.user!.updateDisplayName(given);
+      }
     }
   }
 
@@ -120,8 +130,10 @@ class CloudService extends ChangeNotifier {
     if (u == null) return;
     final code = friendCode;
     final batch = _db.batch();
-    final friendships =
-        await _db.collection('friendships').where('members', arrayContains: u.uid).get();
+    final friendships = await _db
+        .collection('friendships')
+        .where('members', arrayContains: u.uid)
+        .get();
     for (final d in friendships.docs) {
       batch.delete(d.reference);
     }
@@ -133,7 +145,7 @@ class CloudService extends ChangeNotifier {
     } on FirebaseAuthException catch (e) {
       if (e.code == 'requires-recent-login') {
         // نطلب دخولاً جديداً ثم نحذف.
-        if (Platform.isIOS) {
+        if (isIOS) {
           await u.reauthenticateWithProvider(AppleAuthProvider());
         } else {
           await signInWithGoogle();
@@ -150,7 +162,9 @@ class CloudService extends ChangeNotifier {
     if (u == null) return;
     final clean = name.trim();
     if (clean.isEmpty || clean.length > 30) return;
-    await _db.collection('users').doc(u.uid).set({'name': clean}, SetOptions(merge: true));
+    await _db.collection('users').doc(u.uid).set({
+      'name': clean,
+    }, SetOptions(merge: true));
     profile = {...?profile, 'name': clean};
     notifyListeners();
   }
@@ -184,11 +198,16 @@ class CloudService extends ChangeNotifier {
   }
 
   /// رمز صداقة من ٦ أحرف، فريد عبر مجموعة codes.
-  Future<void> _assignCode(DocumentReference<Map<String, dynamic>> userRef) async {
+  Future<void> _assignCode(
+    DocumentReference<Map<String, dynamic>> userRef,
+  ) async {
     const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     final rnd = Random.secure();
     for (var attempt = 0; attempt < 5; attempt++) {
-      final code = List.generate(6, (_) => alphabet[rnd.nextInt(alphabet.length)]).join();
+      final code = List.generate(
+        6,
+        (_) => alphabet[rnd.nextInt(alphabet.length)],
+      ).join();
       final codeRef = _db.collection('codes').doc(code);
       try {
         await _db.runTransaction((tx) async {
@@ -230,20 +249,16 @@ class CloudService extends ChangeNotifier {
         final snap = await tx.get(ref);
         final d = snap.data() ?? {};
         int val(String k) => (d[k] as num?)?.toInt() ?? 0;
-        tx.set(
-          ref,
-          {
-            'total': val('total') + delta,
-            'dayKey': dk,
-            'dayCount': (d['dayKey'] == dk ? val('dayCount') : 0) + delta,
-            'weekKey': wk,
-            'weekCount': (d['weekKey'] == wk ? val('weekCount') : 0) + delta,
-            'monthKey': mk,
-            'monthCount': (d['monthKey'] == mk ? val('monthCount') : 0) + delta,
-            'updatedAt': FieldValue.serverTimestamp(),
-          },
-          SetOptions(merge: true),
-        );
+        tx.set(ref, {
+          'total': val('total') + delta,
+          'dayKey': dk,
+          'dayCount': (d['dayKey'] == dk ? val('dayCount') : 0) + delta,
+          'weekKey': wk,
+          'weekCount': (d['weekKey'] == wk ? val('weekCount') : 0) + delta,
+          'monthKey': mk,
+          'monthCount': (d['monthKey'] == mk ? val('monthCount') : 0) + delta,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
       });
     } catch (e) {
       // إذا فشل الإرسال (بدون إنترنت مثلاً) نرجع النقاط للانتظار.
@@ -255,7 +270,9 @@ class CloudService extends ChangeNotifier {
 
   // -------------------------------------------------------------- الترتيب
 
-  static (String keyField, String? keyValue, String countField) _periodFields(RankPeriod p) {
+  static (String keyField, String? keyValue, String countField) _periodFields(
+    RankPeriod p,
+  ) {
     final now = DateTime.now();
     return switch (p) {
       RankPeriod.day => ('dayKey', dayKey(now), 'dayCount'),
@@ -291,14 +308,17 @@ class CloudService extends ChangeNotifier {
       for (final d in snap.docs) {
         final data = d.data();
         final current = keyValue == null || data[keyField] == keyValue;
-        entries.add(_entry(d.id, current ? data : {...data, countField: 0}, countField));
+        entries.add(
+          _entry(d.id, current ? data : {...data, countField: 0}, countField),
+        );
       }
     }
     entries.sort((a, b) => b.score.compareTo(a.score));
     return entries;
   }
 
-  RankEntry _entry(String uid, Map<String, dynamic> d, String countField) => RankEntry(
+  RankEntry _entry(String uid, Map<String, dynamic> d, String countField) =>
+      RankEntry(
         uid: uid,
         name: (d['name'] as String?) ?? '',
         score: (d[countField] as num?)?.toInt() ?? 0,
@@ -307,16 +327,21 @@ class CloudService extends ChangeNotifier {
 
   // -------------------------------------------------------------- الأصدقاء
 
-  static String pairId(String a, String b) => a.compareTo(b) < 0 ? '${a}_$b' : '${b}_$a';
+  static String pairId(String a, String b) =>
+      a.compareTo(b) < 0 ? '${a}_$b' : '${b}_$a';
 
   Future<List<String>> friendIds() async {
     final u = user;
     if (u == null) return [];
-    final snap =
-        await _db.collection('friendships').where('members', arrayContains: u.uid).get();
+    final snap = await _db
+        .collection('friendships')
+        .where('members', arrayContains: u.uid)
+        .get();
     return [
       for (final d in snap.docs)
-        ...(d.data()['members'] as List).cast<String>().where((m) => m != u.uid)
+        ...(d.data()['members'] as List).cast<String>().where(
+          (m) => m != u.uid,
+        ),
     ];
   }
 
@@ -328,20 +353,24 @@ class CloudService extends ChangeNotifier {
         .where('members', arrayContains: u.uid)
         .snapshots()
         .asyncMap((snap) async {
-      final ids = [
-        for (final d in snap.docs)
-          ...(d.data()['members'] as List).cast<String>().where((m) => m != u.uid)
-      ];
-      final out = <RankEntry>[];
-      for (var i = 0; i < ids.length; i += 30) {
-        final chunk = ids.sublist(i, min(i + 30, ids.length));
-        final users =
-            await _db.collection('users').where(FieldPath.documentId, whereIn: chunk).get();
-        out.addAll(users.docs.map((d) => _entry(d.id, d.data(), 'total')));
-      }
-      out.sort((a, b) => a.name.compareTo(b.name));
-      return out;
-    });
+          final ids = [
+            for (final d in snap.docs)
+              ...(d.data()['members'] as List).cast<String>().where(
+                (m) => m != u.uid,
+              ),
+          ];
+          final out = <RankEntry>[];
+          for (var i = 0; i < ids.length; i += 30) {
+            final chunk = ids.sublist(i, min(i + 30, ids.length));
+            final users = await _db
+                .collection('users')
+                .where(FieldPath.documentId, whereIn: chunk)
+                .get();
+            out.addAll(users.docs.map((d) => _entry(d.id, d.data(), 'total')));
+          }
+          out.sort((a, b) => a.name.compareTo(b.name));
+          return out;
+        });
   }
 
   /// يرجع false إذا الرمز غير موجود.
@@ -369,13 +398,17 @@ class CloudService extends ChangeNotifier {
         .collection('friendRequests')
         .where('to', isEqualTo: u.uid)
         .snapshots()
-        .map((s) => s.docs
-            .map((d) => FriendRequest(
+        .map(
+          (s) => s.docs
+              .map(
+                (d) => FriendRequest(
                   id: d.id,
                   fromUid: d.data()['from'] as String,
                   fromName: (d.data()['fromName'] as String?) ?? '',
-                ))
-            .toList());
+                ),
+              )
+              .toList(),
+        );
   }
 
   Future<void> acceptRequest(FriendRequest r) async {
@@ -411,14 +444,16 @@ class CloudService extends ChangeNotifier {
         .orderBy('at', descending: true)
         .limit(100)
         .snapshots()
-        .map((s) => s.docs.map((d) {
-              final m = d.data();
-              return ChatMessage(
-                from: m['from'] as String,
-                text: m['text'] as String,
-                at: (m['at'] as Timestamp?)?.toDate() ?? DateTime.now(),
-              );
-            }).toList());
+        .map(
+          (s) => s.docs.map((d) {
+            final m = d.data();
+            return ChatMessage(
+              from: m['from'] as String,
+              text: m['text'] as String,
+              at: (m['at'] as Timestamp?)?.toDate() ?? DateTime.now(),
+            );
+          }).toList(),
+        );
   }
 
   Future<void> sendMessage(String friendUid, String text) async {
@@ -430,9 +465,9 @@ class CloudService extends ChangeNotifier {
         .doc(pairId(u.uid, friendUid))
         .collection('messages')
         .add({
-      'from': u.uid,
-      'text': clean.length > 500 ? clean.substring(0, 500) : clean,
-      'at': FieldValue.serverTimestamp(),
-    });
+          'from': u.uid,
+          'text': clean.length > 500 ? clean.substring(0, 500) : clean,
+          'at': FieldValue.serverTimestamp(),
+        });
   }
 }

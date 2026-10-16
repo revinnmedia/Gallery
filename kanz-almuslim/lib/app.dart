@@ -53,7 +53,10 @@ class _KanzAppState extends State<KanzApp> with WidgetsBindingObserver {
         GlobalCupertinoLocalizations.delegate,
       ],
       // إعادة بناء كل الشاشات عند تغيير اللغة.
-      home: KeyedSubtree(key: ValueKey(state.language), child: const HomeShell()),
+      home: KeyedSubtree(
+        key: ValueKey(state.language),
+        child: const HomeShell(),
+      ),
     );
   }
 }

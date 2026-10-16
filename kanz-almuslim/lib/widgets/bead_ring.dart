@@ -9,7 +9,12 @@ import '../theme.dart';
 /// كما في النسخة الأصلية: أول حبة عند الساعة ٣ (يمين الدائرة)،
 /// ثم تمتلئ عكس عقارب الساعة (للأعلى ثم لليسار).
 class BeadRing extends StatelessWidget {
-  const BeadRing({super.key, required this.lit, this.beads = 33, required this.child});
+  const BeadRing({
+    super.key,
+    required this.lit,
+    this.beads = 33,
+    required this.child,
+  });
 
   final int lit;
   final int beads;
@@ -17,22 +22,24 @@ class BeadRing extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, c) {
-      final side = min(c.maxWidth, c.maxHeight);
-      return Center(
-        child: SizedBox.square(
-          dimension: side,
-          child: TweenAnimationBuilder<double>(
-            tween: Tween(end: lit.toDouble()),
-            duration: const Duration(milliseconds: 160),
-            builder: (context, v, _) => CustomPaint(
-              painter: _RingPainter(v, beads),
-              child: Center(child: child),
+    return LayoutBuilder(
+      builder: (context, c) {
+        final side = min(c.maxWidth, c.maxHeight);
+        return Center(
+          child: SizedBox.square(
+            dimension: side,
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(end: lit.toDouble()),
+              duration: const Duration(milliseconds: 160),
+              builder: (context, v, _) => CustomPaint(
+                painter: _RingPainter(v, beads),
+                child: Center(child: child),
+              ),
             ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 }
 
@@ -55,7 +62,11 @@ class _RingPainter extends CustomPainter {
       final fill = (lit - i).clamp(0.0, 1.0);
       canvas.drawCircle(pos, beadR, dim);
       if (fill > 0) {
-        canvas.drawCircle(pos, beadR * (0.6 + 0.4 * fill), on..color = KanzColors.beadLit.withValues(alpha: fill));
+        canvas.drawCircle(
+          pos,
+          beadR * (0.6 + 0.4 * fill),
+          on..color = KanzColors.beadLit.withValues(alpha: fill),
+        );
       }
     }
   }
