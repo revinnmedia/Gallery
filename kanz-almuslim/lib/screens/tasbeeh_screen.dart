@@ -4,7 +4,8 @@ import 'package:provider/provider.dart';
 import '../l10n.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
-import '../widgets/counter_ring.dart';
+import '../widgets/bead_ring.dart';
+import '../widgets/fingers_row.dart';
 import '../widgets/pattern_background.dart';
 import 'manage_dhikr_screen.dart';
 
@@ -19,6 +20,7 @@ class _TasbeehScreenState extends State<TasbeehScreen> with SingleTickerProvider
   late final PageController _pages;
   late final AnimationController _pulse;
   bool _celebrating = false;
+  final _fingers = FingersController();
 
   @override
   void initState() {
@@ -36,6 +38,13 @@ class _TasbeehScreenState extends State<TasbeehScreen> with SingleTickerProvider
   }
 
   void _onTap() {
+    if (_celebrating) return;
+    _count();
+    _fingers.launch();
+  }
+
+  /// تسبيحة واحدة (من لمس الشاشة أو سحب إصبع).
+  void _count() {
     if (_celebrating) return;
     final result = context.read<AppState>().tap();
     _pulse.forward(from: 0);
@@ -58,7 +67,8 @@ class _TasbeehScreenState extends State<TasbeehScreen> with SingleTickerProvider
     final state = context.watch<AppState>();
     final d = state.current;
     final cycle = state.displayCount;
-    final progress = d.target > 0 ? cycle / d.target : 0.0;
+    // حبات السبحة 33 دائماً؛ إذا كانت الدورة أطول تضيء بالنسبة.
+    final lit = d.target == 33 || d.target <= 0 ? cycle : (cycle * 33 / d.target).round();
 
     // نحافظ على تزامن الصفحة إذا تغيّر الذكر من شاشة الإدارة.
     if (_pages.hasClients && _pages.page?.round() != state.currentIndex) {
@@ -74,6 +84,9 @@ class _TasbeehScreenState extends State<TasbeehScreen> with SingleTickerProvider
             _TopBar(
               today: state.todayTotal,
               total: state.total,
+              soundOn: state.soundOn,
+              onSound: () => state.setSound(!state.soundOn),
+              onReset: state.currentCycle == 0 ? null : state.resetCycle,
               onManage: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const ManageDhikrScreen()),
               ),
@@ -83,10 +96,9 @@ class _TasbeehScreenState extends State<TasbeehScreen> with SingleTickerProvider
                 behavior: HitTestBehavior.opaque,
                 onTap: _onTap,
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     SizedBox(
-                      height: 110,
+                      height: 78,
                       child: PageView.builder(
                         controller: _pages,
                         itemCount: state.dhikrs.length,
@@ -100,8 +112,8 @@ class _TasbeehScreenState extends State<TasbeehScreen> with SingleTickerProvider
                                 state.dhikrs[i].text,
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
-                                  fontSize: 40,
-                                  height: 1.6,
+                                  fontSize: 36,
+                                  height: 1.5,
                                   color: Colors.white,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -112,54 +124,49 @@ class _TasbeehScreenState extends State<TasbeehScreen> with SingleTickerProvider
                       ),
                     ),
                     _Dots(count: state.dhikrs.length, index: state.currentIndex),
-                    const SizedBox(height: 28),
-                    ScaleTransition(
-                      scale: Tween(begin: 1.0, end: 0.96).animate(
-                        CurvedAnimation(parent: _pulse, curve: Curves.easeOut, reverseCurve: Curves.easeIn),
-                      ),
-                      child: CounterRing(
-                        progress: progress,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              fmtNum(context, cycle),
-                              style: const TextStyle(
-                                fontSize: 76,
-                                fontWeight: FontWeight.w300,
-                                color: Colors.white,
-                                height: 1.1,
-                              ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 10, 24, 6),
+                        child: ScaleTransition(
+                          scale: Tween(begin: 1.0, end: 0.97).animate(
+                            CurvedAnimation(parent: _pulse, curve: Curves.easeOut, reverseCurve: Curves.easeIn),
+                          ),
+                          child: BeadRing(
+                            lit: lit,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  fmtNum(context, cycle),
+                                  style: const TextStyle(
+                                    fontSize: 64,
+                                    fontWeight: FontWeight.w300,
+                                    color: Colors.white,
+                                    height: 1.1,
+                                  ),
+                                ),
+                                Text(
+                                  '/ ${fmtNum(context, d.target)}',
+                                  style: TextStyle(fontSize: 16, color: Colors.white.withValues(alpha: 0.7)),
+                                ),
+                              ],
                             ),
-                            Text(
-                              '/ ${fmtNum(context, d.target)}',
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.white.withValues(alpha: 0.75),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
                     Text(
                       tr(context, 'tapToCount'),
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 15),
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 13),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      tr(context, 'swipeToChange'),
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.55), fontSize: 12),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      height: 150,
+                      child: FingersRow(controller: _fingers, onCount: _count),
                     ),
                   ],
                 ),
               ),
-            ),
-            _BottomControls(
-              soundOn: state.soundOn,
-              onSound: () => state.setSound(!state.soundOn),
-              onReset: state.currentCycle == 0 ? null : state.resetCycle,
             ),
           ],
         ),
@@ -169,26 +176,36 @@ class _TasbeehScreenState extends State<TasbeehScreen> with SingleTickerProvider
 }
 
 class _TopBar extends StatelessWidget {
-  const _TopBar({required this.today, required this.total, required this.onManage});
+  const _TopBar({
+    required this.today,
+    required this.total,
+    required this.onManage,
+    required this.soundOn,
+    required this.onSound,
+    required this.onReset,
+  });
   final int today;
   final int total;
   final VoidCallback onManage;
+  final bool soundOn;
+  final VoidCallback onSound;
+  final VoidCallback? onReset;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 8, 0),
+      padding: const EdgeInsets.fromLTRB(16, 8, 12, 0),
       child: Row(
         children: [
           _Stat(label: tr(context, 'today'), value: fmtNum(context, today)),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           _Stat(label: tr(context, 'total'), value: fmtNum(context, total)),
           const Spacer(),
-          IconButton(
-            tooltip: tr(context, 'manageDhikr'),
-            onPressed: onManage,
-            icon: const Icon(Icons.format_list_bulleted, color: Colors.white),
-          ),
+          _RoundButton(icon: soundOn ? Icons.volume_up : Icons.volume_off, tooltip: tr(context, 'sound'), onPressed: onSound),
+          const SizedBox(width: 6),
+          _RoundButton(icon: Icons.refresh, tooltip: tr(context, 'resetCycle'), onPressed: onReset),
+          const SizedBox(width: 6),
+          _RoundButton(icon: Icons.format_list_bulleted, tooltip: tr(context, 'manageDhikr'), onPressed: onManage),
         ],
       ),
     );
@@ -247,35 +264,6 @@ class _Dots extends StatelessWidget {
   }
 }
 
-class _BottomControls extends StatelessWidget {
-  const _BottomControls({required this.soundOn, required this.onSound, required this.onReset});
-  final bool soundOn;
-  final VoidCallback onSound;
-  final VoidCallback? onReset;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _RoundButton(
-            icon: soundOn ? Icons.volume_up : Icons.volume_off,
-            tooltip: tr(context, 'sound'),
-            onPressed: onSound,
-          ),
-          _RoundButton(
-            icon: Icons.refresh,
-            tooltip: tr(context, 'resetCycle'),
-            onPressed: onReset,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _RoundButton extends StatelessWidget {
   const _RoundButton({required this.icon, required this.tooltip, required this.onPressed});
   final IconData icon;
@@ -293,7 +281,7 @@ class _RoundButton extends StatelessWidget {
         foregroundColor: Colors.white,
         disabledBackgroundColor: Colors.white.withValues(alpha: 0.06),
         disabledForegroundColor: Colors.white38,
-        minimumSize: const Size(52, 52),
+        minimumSize: const Size(44, 44),
       ),
       icon: Icon(icon),
     );
