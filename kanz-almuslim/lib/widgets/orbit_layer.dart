@@ -51,10 +51,10 @@ class OrbitLayerState extends State<OrbitLayer> with TickerProviderStateMixin {
     final c = box.globalToLocal(f.center);
     final v = box.globalToLocal(f.start) - c;
     final th0 = atan2(v.dy, v.dx);
-    // تسير مع اتجاه امتلاء السبحة (عكس عقارب الساعة) مباشرة إلى حبتها.
+    // تلف لفّة كاملة داخل كل الحبات مع اتجاه امتلاء السبحة، ثم تستقر في حبتها.
     final targetAngle = -f.target * 2 * pi / f.beads;
-    final sweep = (th0 - targetAngle) % (2 * pi);
-    final orbitMs = (420 + 520 * sweep / (2 * pi)).round();
+    final sweep = (th0 - targetAngle) % (2 * pi) + 2 * pi;
+    final orbitMs = (560 + 330 * sweep / (2 * pi)).round();
 
     final ctrl = AnimationController(
       vsync: this,
@@ -145,17 +145,18 @@ class _Flight {
   /// المسار داخل حلقة الحبات بقليل.
   double get inner => radius - beadRadius * 2.3;
 
-  double angle(double t) => th0 - sweep * Curves.easeInOutSine.transform(t);
+  /// تنطلق بأقصى سرعة (تكمل اندفاع الإصبع) ثم تتباطأ بنعومة حتى تستقر.
+  double angle(double t) => th0 - sweep * Curves.easeOutCubic.transform(t);
 
   Offset pos(double t) {
     final a = angle(t);
     final double r;
-    if (t < 0.25) {
-      r = lerpDouble(r0, inner, Curves.easeOut.transform((t / 0.25).clamp(0.0, 1.0)))!;
-    } else if (t < 0.85) {
+    if (t < 0.12) {
+      r = lerpDouble(r0, inner, Curves.easeOut.transform((t / 0.12).clamp(0.0, 1.0)))!;
+    } else if (t < 0.8) {
       r = inner;
     } else {
-      r = lerpDouble(inner, radius, Curves.easeInOut.transform(((t - 0.85) / 0.15).clamp(0.0, 1.0)))!;
+      r = lerpDouble(inner, radius, Curves.easeOutBack.transform(((t - 0.8) / 0.2).clamp(0.0, 1.0)))!;
     }
     return center + Offset(cos(a), sin(a)) * r;
   }
@@ -199,12 +200,12 @@ class _OrbitPainter extends CustomPainter {
     canvas.drawCircle(p, s / 2, Paint()..color = Color.lerp(Colors.white, KanzColors.beadLit, t * 0.6)!);
   }
 
-  /// الحبات المضاءة القريبة من النقطة تومض وتكبر قليلاً، ويزداد ذلك
-  /// تدريجياً كلما اقتربت النقطة من المكان الفارغ.
+  /// الحبات القريبة من النقطة تومض وتكبر قليلاً وهي تمر بها، ويزداد ذلك
+  /// تدريجياً كلما اقتربت من مكانها. الحبات غير المضاءة تومض بخفة فقط.
   void _paintBeadGlow(Canvas canvas, _Flight f, double t) {
     final a = f.angle(t);
     final grow = 0.1 + 0.2 * t;
-    for (var i = 0; i < f.target; i++) {
+    for (var i = 0; i < f.beads; i++) {
       final ai = -i * 2 * pi / f.beads;
       // المسافة الزاوية بين النقطة والحبة (الحبات خلفها تنطفئ ببطء).
       var d = (ai - a) % (2 * pi);
@@ -212,13 +213,15 @@ class _OrbitPainter extends CustomPainter {
       final k = d >= 0 ? exp(-pow(d / 0.32, 2)) : exp(-pow(d / 0.18, 2));
       if (k < 0.03) continue;
       final at = f.beadPos(i);
+      final lit = i < f.target;
       canvas.drawCircle(
         at,
         f.beadRadius * (1.5 + grow),
         Paint()
-          ..color = Colors.white.withValues(alpha: 0.35 * k)
+          ..color = Colors.white.withValues(alpha: (lit ? 0.35 : 0.18) * k)
           ..maskFilter = MaskFilter.blur(BlurStyle.normal, f.beadRadius * 0.7),
       );
+      if (!lit) continue;
       canvas.drawCircle(
         at,
         f.beadRadius * (1 + grow * k),

@@ -44,7 +44,7 @@ class FingersRow extends StatefulWidget {
 }
 
 class _FingersRowState extends State<FingersRow> with TickerProviderStateMixin {
-  static const _flyDuration = Duration(milliseconds: 420);
+  static const _flyDuration = Duration(milliseconds: 240);
 
   /// كم يصعد الإصبع (نسبة من ارتفاعه) وحجم النقطة (نسبة من عرضه).
   static const riseFactor = 0.55;
@@ -212,9 +212,9 @@ class _FingerFrame extends StatelessWidget {
     // طار وتحوّل إلى نقطة: النقطة الآن في طبقة المدار.
     if (fly >= 1) return const SizedBox.shrink();
 
-    // الصعود: انطلاقة سريعة تتباطأ، والتحوّل إلى نقطة يتسارع مع الصعود.
-    final rise = Curves.easeOutCubic.transform(fly);
-    final morph = Curves.easeInOutCubic.transform(fly);
+    // الصعود يتسارع حتى لحظة التحوّل، فتنطلق النقطة بسرعتها بلا توقف.
+    final rise = Curves.easeInQuad.transform(fly);
+    final morph = Curves.easeOutCubic.transform(fly);
     final dot = width * _FingersRowState.dotFactor;
     final w = width + (dot - width) * morph;
     final h = height + (dot - height) * morph;
