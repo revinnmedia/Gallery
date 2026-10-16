@@ -73,14 +73,17 @@
    - لوحة صدارة (Classic, High score) بالمعرّف: `kanz_total_tasbeeh` واسم «أكثر الذاكرين».
    - إنجازات (اختياري) بالمعرّفات: `kanz_first_100`، `kanz_first_1000`، `kanz_first_10000`، `kanz_first_100000`.
 3. أنشئ نسخة جديدة **2.0** في App Store Connect، وفي **App Review Information** اكتب للمراجع:
-   > Version 2.0 is a complete rebuild. The old server and Facebook login were removed. Sign in is optional (Apple / Google) and is only used for the leaderboard and friends. Accounts can be deleted from Settings → Delete account.
-4. **مهم:** قبل الرفع افتح رسالة الإزالة في App Review واقرأ سببها، وتأكد أنه مُعالَج.
+   > Version 2.0 is a complete rebuild in response to the App Store Improvement Notice (March 2025). The app is rebuilt with the latest SDK, the old server and Facebook login were removed, and the notification and audio bugs were fixed. Sign in is optional (Apple / Google) and is only used for the leaderboard and friends. Accounts can be deleted from Settings → Account → Delete account. All core features (tasbeeh counter, records, reminders) work without an account.
+### سبب إزالة التطبيق (رسالة Apple)
+رسالتان من Apple:
+- **24 مارس 2025 – App Store Improvement Notice:** التطبيق لم يُحدَّث منذ أكثر من ٣ سنوات
+  ولم يصل للحد الأدنى من التحميلات، فطلبت Apple تحديثاً خلال ٩٠ يوماً (Guideline 4).
+- **23 يونيو 2025:** لم يصل تحديث، فأُزيل التطبيق من المتجر.
 
-### لماذا أزالت Apple التطبيق غالباً؟
-النسخة القديمة (2018) كانت فيها مشاكل تخالف قواعد Apple الحالية، وكلها معالجة في 2.0:
+**ليست مخالفة في المحتوى.** الحل كما تقول Apple: بناء نسخة بأحدث Xcode ورفعها كتحديث،
+وعند الموافقة يرجع التطبيق للمتجر بنفس الصفحة. النسخة 2.0 تفعل ذلك (تُبنى على Codemagic بأحدث Xcode).
 
-| المشكلة القديمة | الحل في 2.0 |
-|---|---|
+---|---|
 | السيرفر `kanz.sci3ntist.com` يعمل بـ http غير مشفّر (ممنوع) وغالباً متوقف | Firebase مشفّر بالكامل |
 | تسجيل الدخول بفيسبوك فقط بدون «Sign in with Apple» | Apple + Google |
 | لا يوجد حذف حساب داخل التطبيق (إلزامي منذ 2022) | الإعدادات → حذف الحساب |
