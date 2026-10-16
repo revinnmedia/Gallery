@@ -166,4 +166,18 @@ void main() {
     }
     await t.pumpAndSettle();
   });
+
+  // لقطة أثناء سحب الإصبع باللمس (للمراجعة فقط).
+  testWidgets('10 drag frame', (t) async {
+    if (_store) return;
+    await _pump(t, await _state());
+    final g = await t.startGesture(const Offset(300, 520));
+    for (var k = 0; k < 12; k++) {
+      await g.moveBy(const Offset(0, -8));
+      await t.pump(const Duration(milliseconds: 30));
+    }
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile('motion/drag.png'));
+    await g.up();
+    await t.pumpAndSettle();
+  });
 }

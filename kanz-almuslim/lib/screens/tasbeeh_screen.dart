@@ -40,8 +40,9 @@ class _TasbeehScreenState extends State<TasbeehScreen> with TickerProviderStateM
   /// اختفت الحبات: نعرض صفراً حتى التسبيحة التالية.
   bool _fresh = false;
 
-  /// مسافة السحب العمودي الحالي (سالبة للأعلى).
+  /// مسافة السحب العمودي الحالي (سالبة للأعلى)، وهل يتبعه إصبع.
   double _swipeDy = 0;
+  bool _dragFinger = false;
 
   @override
   void initState() {
@@ -210,11 +211,24 @@ class _TasbeehScreenState extends State<TasbeehScreen> with TickerProviderStateM
                       behavior: HitTestBehavior.opaque,
                       // حركتان للتسبيح: النقر في أي مكان، أو السحب للأعلى في أي مكان.
                       onTap: _onTap,
-                      onVerticalDragStart: (_) => _swipeDy = 0,
-                      onVerticalDragUpdate: (e) => _swipeDy += e.delta.dy,
+                      // السحب من أي مكان يحرّك الإصبع التالي مع اللمس، وعند الإفلات ينطلق.
+                      onVerticalDragStart: (_) {
+                        _swipeDy = 0;
+                        _dragFinger = !_celebrating && _fingers.dragStart();
+                      },
+                      onVerticalDragUpdate: (e) {
+                        _swipeDy += e.delta.dy;
+                        if (_dragFinger) _fingers.dragUpdate(e.delta.dy);
+                      },
                       onVerticalDragEnd: (e) {
                         final v = e.primaryVelocity ?? 0;
-                        if (_swipeDy < -30 || v < -300) _onTap();
+                        if (_dragFinger) {
+                          _fingers.dragEnd(v);
+                        } else if (_swipeDy < -30 || v < -300) {
+                          // لا يوجد إصبع جاهز (كلها في الطريق): نعدّ مباشرة.
+                          _count();
+                        }
+                        _dragFinger = false;
                       },
                       child: Column(
                         children: [

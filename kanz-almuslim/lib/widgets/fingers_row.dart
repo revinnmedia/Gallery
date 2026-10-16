@@ -11,6 +11,15 @@ class FingersController {
 
   /// يطلق الإصبع التالي للأعلى. [payload] يعود مع [FingersRow.onMorphed].
   bool launch(int payload) => _state?._launchNext(payload) ?? false;
+
+  /// سحب من أي مكان في الشاشة: الإصبع التالي يتبع اللمس.
+  /// يرجع false إذا لم يوجد إصبع جاهز.
+  bool dragStart() => _state?._dragBegin(null) ?? false;
+  void dragUpdate(double dy) => _state?._dragMove(dy);
+
+  /// عند رفع اللمس: ينطلق الإصبع إذا سُحب كفاية (ويُحسب عبر onSwipe)، وإلا يعود لمكانه.
+  /// يرجع true إذا انطلق.
+  bool dragEnd(double velocity) => _state?._dragFinish(velocity) ?? false;
 }
 
 /// يُستدعى عندما يكتمل تحوّل الإصبع إلى نقطة: مركزها (إحداثيات الشاشة) وقطرها.
@@ -54,6 +63,11 @@ class _FingersRowState extends State<FingersRow> with TickerProviderStateMixin {
   late final List<AnimationController> _fly;
   late final List<AnimationController> _grow;
   late final List<double> _drag;
+
+  /// الإصبع الذي يتبع اللمس الآن، وارتفاع الصف (لحدود السحب).
+  int? _dragging;
+  double _rowHeight = 150;
+  late final AnimationController _snap;
   late final List<GlobalKey> _keys;
 
   /// الأصابع التي انطلقت (تطير أو اختفت) ومكانها لحظة الانطلاق.
@@ -77,6 +91,7 @@ class _FingersRowState extends State<FingersRow> with TickerProviderStateMixin {
       (_) => AnimationController(vsync: this, duration: _growDuration, value: 1),
     );
     _drag = List.filled(widget.count, 0);
+    _snap = AnimationController(vsync: this, duration: const Duration(milliseconds: 200));
     _keys = List.generate(widget.count, (_) => GlobalKey());
     _launched = List.filled(widget.count, false);
     _launchSlot = List.filled(widget.count, 0);
@@ -93,6 +108,7 @@ class _FingersRowState extends State<FingersRow> with TickerProviderStateMixin {
   @override
   void dispose() {
     widget.controller._state = null;
+    _snap.dispose();
     for (final c in [..._fly, ..._grow]) {
       c.dispose();
     }
@@ -129,6 +145,41 @@ class _FingersRowState extends State<FingersRow> with TickerProviderStateMixin {
       if (!_gone[j]) k++;
     }
     return k;
+  }
+
+  bool _dragBegin(int? i) {
+    final idx = i ?? _nextReady();
+    if (idx == null || !_ready(idx)) return false;
+    _snap.stop();
+    _dragging = idx;
+    return true;
+  }
+
+  void _dragMove(double dy) {
+    final i = _dragging;
+    if (i == null) return;
+    // يتبع اللمس مباشرة، مع مقاومة خفيفة كلما ارتفع.
+    final next = _drag[i] + dy * (1 - (-_drag[i] / (_rowHeight * 1.6)).clamp(0.0, 0.6));
+    setState(() => _drag[i] = next.clamp(-_rowHeight * 0.9, 0.0));
+  }
+
+  bool _dragFinish(double velocity) {
+    final i = _dragging;
+    _dragging = null;
+    if (i == null) return false;
+    if (_drag[i] < -_rowHeight * 0.22 || velocity < -300) {
+      _animate(i, widget.onSwipe());
+      return true;
+    }
+    // لم يُسحب كفاية: يعود لمكانه بنعومة.
+    final from = _drag[i];
+    void tick() {
+      if (mounted) setState(() => _drag[i] = from * (1 - Curves.easeOutBack.transform(_snap.value)));
+    }
+
+    _snap.addListener(tick);
+    _snap.forward(from: 0).whenCompleteOrCancel(() => _snap.removeListener(tick));
+    return false;
   }
 
   Future<void> _animate(int i, int payload) async {
@@ -181,6 +232,7 @@ class _FingersRowState extends State<FingersRow> with TickerProviderStateMixin {
         const gap = 8.0;
         final w = (c.maxWidth - gap * (widget.count + 1)) / widget.count;
         final h = c.maxHeight;
+        _rowHeight = h;
         // الإصبع التالي (الأكثر إضاءة) دائماً على اليمين، والباقي يتزحلق إليه.
         return Stack(
           clipBehavior: Clip.none,
@@ -203,18 +255,9 @@ class _FingersRowState extends State<FingersRow> with TickerProviderStateMixin {
                     bottom: 0,
                     child: GestureDetector(
                       behavior: HitTestBehavior.opaque,
-                      onVerticalDragUpdate: (d) {
-                        if (!_ready(i)) return;
-                        setState(() => _drag[i] = (_drag[i] + d.delta.dy).clamp(-h * 0.6, 0));
-                      },
-                      onVerticalDragEnd: (d) {
-                        final v = d.primaryVelocity ?? 0;
-                        if (_ready(i) && (_drag[i] < -24 || v < -220)) {
-                          _animate(i, widget.onSwipe());
-                        } else {
-                          setState(() => _drag[i] = 0);
-                        }
-                      },
+                      onVerticalDragStart: (_) => _dragBegin(i),
+                      onVerticalDragUpdate: (d) => _dragMove(d.delta.dy),
+                      onVerticalDragEnd: (d) => _dragFinish(d.primaryVelocity ?? 0),
                       child: SizedBox(
                         key: _keys[i],
                         width: w,
