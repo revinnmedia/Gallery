@@ -142,8 +142,8 @@ class _Flight {
   final int beads;
   bool arrived = false;
 
-  /// المسار داخل حلقة الحبات بقليل.
-  double get inner => radius - beadRadius * 2.3;
+  /// المسار يمر داخل الحبات نفسها (على خط مراكزها).
+  double get inner => radius;
 
   /// تنطلق بأقصى سرعة (تكمل اندفاع الإصبع) ثم تتباطأ بنعومة حتى تستقر.
   double angle(double t) => th0 - sweep * Curves.easeOutCubic.transform(t);
