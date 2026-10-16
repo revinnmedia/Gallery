@@ -51,7 +51,7 @@ const _strings = <String, Map<String, String>>{
   'dndFrom': {'ar': 'لا تنبيهات من', 'en': 'No reminders from'},
   'to': {'ar': 'الى', 'en': 'to'},
   'sound': {'ar': 'صوت التسبيح', 'en': 'Tasbeeh sound'},
-  'vibration': {'ar': 'الاهتزاز عند ٣٣', 'en': 'Vibrate at 33'},
+  'vibration': {'ar': 'الاهتزاز عند 33', 'en': 'Vibrate at 33'},
   'manageDhikr': {'ar': 'التسابيح', 'en': 'Tasbeehs'},
   'ranking': {'ar': 'الترتيب', 'en': 'Ranking'},
   'friends': {'ar': 'الاصدقاء', 'en': 'Friends'},
@@ -61,7 +61,7 @@ const _strings = <String, Map<String, String>>{
     'en': 'Try Kanz Al Muslim, a tasbeeh app to compete in remembering Allah',
   },
   'aboutBody': {
-    'ar': 'بعون الله ورعايته نقدم لكم تطبيق كنز المسلم ونتمنى من الله أن ينال اعجابكم. التطبيق عبارة عن طريقة جديدة للتسبيح ومحفزة لروح المنافسة بين الاصدقاء والمسلمين، حيث يعرض ترتيبك بين اصدقائك والمسبحين حول العالم، ويحفظ التسبيحات لكل تسبيحة على حدة، مع الاهتزاز عند ٣٣ والتهنئة عند المائة.',
+    'ar': 'بعون الله ورعايته نقدم لكم تطبيق كنز المسلم ونتمنى من الله أن ينال اعجابكم. التطبيق عبارة عن طريقة جديدة للتسبيح ومحفزة لروح المنافسة بين الاصدقاء والمسلمين، حيث يعرض ترتيبك بين اصدقائك والمسبحين حول العالم، ويحفظ التسبيحات لكل تسبيحة على حدة، مع الاهتزاز عند 33 والتهنئة عند المائة.',
     'en': 'Kanz Al Muslim is a new way to do tasbeeh that motivates friendly competition between friends and Muslims worldwide.',
   },
   // الدعم
@@ -157,7 +157,7 @@ const _strings = <String, Map<String, String>>{
   'resetCycle': {'ar': 'تصفير العداد', 'en': 'Reset counter'},
   'vibrateEvery': {'ar': 'الاهتزاز كل', 'en': 'Vibrate every'},
   'continue': {'ar': 'متابعة', 'en': 'Continue'},
-  'last30': {'ar': 'آخر ٣٠ يوماً', 'en': 'Last 30 days'},
+  'last30': {'ar': 'آخر 30 يوماً', 'en': 'Last 30 days'},
   'times': {'ar': 'مرة', 'en': 'times'},
   'accept': {'ar': 'قبول', 'en': 'Accept'},
   'decline': {'ar': 'رفض', 'en': 'Decline'},
@@ -184,18 +184,11 @@ String trLang(String lang, String key, {Map<String, String>? args}) {
   return s;
 }
 
-/// الأرقام العربية عند اختيار اللغة العربية.
-String fmtNum(BuildContext context, int n) {
-  final lang = Provider.of<AppState>(context, listen: false).language;
-  return fmtNumLang(lang, n);
-}
+/// الأرقام دائماً لاتينية (0-9) في كل اللغات.
+String fmtNum(BuildContext context, int n) => n.toString();
 
-String fmtNumLang(String lang, int n) {
-  final s = n.toString();
-  if (lang != 'ar') return s;
-  const digits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-  return s.split('').map((c) {
-    final d = int.tryParse(c);
-    return d == null ? c : digits[d];
-  }).join();
-}
+String fmtNumLang(String lang, int n) => n.toString();
+
+/// يحوّل أي أرقام عربية-هندية (0-9) في نص إلى أرقام لاتينية.
+String latinDigits(String s) =>
+    s.replaceAllMapped(RegExp('[\u0660-\u0669]'), (m) => '${m[0]!.codeUnitAt(0) - 0x0660}');

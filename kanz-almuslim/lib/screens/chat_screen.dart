@@ -93,7 +93,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               ),
                             ),
                             Text(
-                              timeFmt.format(m.at),
+                              latinDigits(timeFmt.format(m.at)),
                               style: const TextStyle(
                                 fontSize: 10,
                                 color: Colors.white60,

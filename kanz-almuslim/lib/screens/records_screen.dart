@@ -111,7 +111,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
             child: Row(
               children: [
                 Text(
-                  DateFormat.yMMMMEEEEd(locale).format(_selected),
+                  latinDigits(DateFormat.yMMMMEEEEd(locale).format(_selected)),
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const Spacer(),
