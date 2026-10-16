@@ -121,11 +121,15 @@ class CloudService extends ChangeNotifier {
 
   bool _googleInitialized = false;
 
+  /// Web client (client_type 3) من google-services.json لمشروع kanz-almuslim.
+  static const _webClientId = '557667158104-5cugdr6vnd3u12ahi62h9dotrd9r6t7u.apps.googleusercontent.com';
+
   Future<void> signInWithGoogle() async {
     if (demo != null) return _demoSignIn();
     final google = GoogleSignIn.instance;
     if (!_googleInitialized) {
-      await google.initialize();
+      // على أندرويد نحتاج "Web client" ليرجع idToken يقبله Firebase.
+      await google.initialize(serverClientId: isAndroid ? _webClientId : null);
       _googleInitialized = true;
     }
     final account = await google.authenticate();

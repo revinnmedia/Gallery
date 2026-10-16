@@ -12,7 +12,20 @@
           "package_name": "com.revinn.kanzalmuslim"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "557667158104-2soob6do3kri3b86haefgri53legn635.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.revinn.kanzalmuslim",
+            "certificate_hash": "b3d16b5437d8cdfc6070615d9747f6fc48b524a7"
+          }
+        },
+        {
+          "client_id": "557667158104-5cugdr6vnd3u12ahi62h9dotrd9r6t7u.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAXoI6BVlOxir016QYxanzIEkpC8t4ovu4"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "557667158104-5cugdr6vnd3u12ahi62h9dotrd9r6t7u.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "557667158104-q49nbalkf23k1429vfageb5mi1aoaomn.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.sci3ntist.com.kanzalmuslim"
+              }
+            }
+          ]
         }
       }
     }
