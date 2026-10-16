@@ -1,11 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../data/defaults.dart';
 import '../l10n.dart';
 import '../models.dart';
+import '../services/location_service.dart';
 import '../services/notification_service.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
@@ -42,6 +44,7 @@ class RemindersScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.only(bottom: 96),
         children: [
+          const _BlessedCard(),
           Card(
             child: Column(
               children: [
@@ -124,10 +127,12 @@ class RemindersScreen extends StatelessWidget {
           child: ListView(
             shrinkWrap: true,
             children: options
-                .map((p) => ListTile(
-                      title: Text(p.text, style: const TextStyle(fontSize: 18)),
-                      onTap: () => Navigator.pop(ctx, p),
-                    ))
+                .map(
+                  (p) => ListTile(
+                    title: Text(p.text, style: const TextStyle(fontSize: 18)),
+                    onTap: () => Navigator.pop(ctx, p),
+                  ),
+                )
                 .toList(),
           ),
         ),
@@ -173,6 +178,103 @@ class RemindersScreen extends StatelessWidget {
   }
 }
 
+/// أوقات التسبيح المباركة: ﴿قَبْلَ طُلُوعِ الشَّمْسِ وَقَبْلَ غُرُوبِهَا﴾.
+class _BlessedCard extends StatefulWidget {
+  const _BlessedCard();
+
+  @override
+  State<_BlessedCard> createState() => _BlessedCardState();
+}
+
+class _BlessedCardState extends State<_BlessedCard> {
+  bool _locating = false;
+
+  Future<void> _locate({bool quiet = false}) async {
+    final s = context.read<AppState>();
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _locating = true);
+    final pos = await LocationService.current();
+    if (!mounted) return;
+    setState(() => _locating = false);
+    if (pos != null) {
+      await s.setBlessedLocation(pos.$1, pos.$2);
+    } else if (!quiet && !kIsWeb) {
+      messenger.showSnackBar(SnackBar(content: Text(trLang(s.language, 'locationDenied'))));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = context.watch<AppState>();
+    final fmt = DateFormat.jm(s.language == 'ar' ? 'ar' : 'en');
+    final (morning, evening) = s.blessedToday;
+    String time(DateTime t) => latinDigits(fmt.format(t));
+    return Card(
+      child: Column(
+        children: [
+          SwitchListTile(
+            secondary: const Icon(Icons.wb_twilight, color: KanzColors.gold),
+            title: Text(tr(context, 'blessedTimes'), style: const TextStyle(fontWeight: FontWeight.w500)),
+            subtitle: Text(tr(context, 'blessedHint'), style: const TextStyle(color: Colors.white70)),
+            value: s.blessedOn,
+            onChanged: (v) async {
+              if (v && !await RemindersScreen._ensurePermission(context)) return;
+              await s.updateReminders(blessed: v);
+              if (v && s.blessedApprox) await _locate(quiet: true);
+            },
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+            child: Text(
+              tr(context, 'blessedVerse'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: KanzColors.paleAqua, fontSize: 17, height: 1.8),
+            ),
+          ),
+          if (s.blessedOn) ...[
+            ListTile(
+              dense: true,
+              leading: const Icon(Icons.wb_sunny_outlined, color: KanzColors.gold),
+              title: Text(tr(context, 'beforeSunrise')),
+              trailing: Text(
+                time(morning),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+            ),
+            ListTile(
+              dense: true,
+              leading: const Icon(Icons.nights_stay_outlined, color: KanzColors.gold),
+              title: Text(tr(context, 'beforeSunset')),
+              trailing: Text(
+                time(evening),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+            ),
+            ListTile(
+              dense: true,
+              leading: Icon(
+                s.blessedApprox ? Icons.location_searching : Icons.my_location,
+                color: Colors.white70,
+              ),
+              title: Text(
+                tr(context, s.blessedApprox ? 'approxTimes' : 'byYourLocation'),
+                style: const TextStyle(color: Colors.white70, fontSize: 13),
+              ),
+              trailing: _locating
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: KanzColors.cyan),
+                    )
+                  : TextButton(onPressed: _locate, child: Text(tr(context, 'updateLocation'))),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 class _MinutesChip extends StatelessWidget {
   const _MinutesChip({required this.minutes, required this.onTap});
   final int minutes;
@@ -180,18 +282,15 @@ class _MinutesChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          decoration: BoxDecoration(
-            color: KanzColors.inputBox,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            '${fmtNum(context, minutes)} ${tr(context, 'minutes')}',
-            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
-          ),
-        ),
-      );
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(10),
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      decoration: BoxDecoration(color: KanzColors.inputBox, borderRadius: BorderRadius.circular(10)),
+      child: Text(
+        '${fmtNum(context, minutes)} ${tr(context, 'minutes')}',
+        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
+      ),
+    ),
+  );
 }

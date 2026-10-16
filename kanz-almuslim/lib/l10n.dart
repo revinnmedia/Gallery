@@ -32,6 +32,24 @@ const _strings = <String, Map<String, String>>{
   'editAdhkar': {'ar': 'تحرير الاذكار', 'en': 'Edit adhkar'},
   'done': {'ar': 'تم', 'en': 'Done'},
   'every': {'ar': 'كل', 'en': 'Every'},
+  'blessedTimes': {'ar': 'أوقات التسبيح المباركة', 'en': 'Blessed times of glorification'},
+  'blessedVerse': {
+    'ar': '﴿وَسَبِّحْ بِحَمْدِ رَبِّكَ قَبْلَ طُلُوعِ الشَّمْسِ وَقَبْلَ غُرُوبِهَا﴾',
+    'en': '"And glorify the praise of your Lord before the rising of the sun and before its setting"',
+  },
+  'blessedHint': {
+    'ar': 'تذكير يومي بين الفجر والشروق، وبين العصر والمغرب',
+    'en': 'A daily reminder between Fajr and sunrise, and between Asr and Maghrib',
+  },
+  'beforeSunrise': {'ar': 'قبل الشروق', 'en': 'Before sunrise'},
+  'beforeSunset': {'ar': 'قبل الغروب', 'en': 'Before sunset'},
+  'byYourLocation': {'ar': 'حسب موقعك', 'en': 'Based on your location'},
+  'approxTimes': {'ar': 'أوقات تقريبية، حدّد موقعك لدقة أكبر', 'en': 'Approximate times, set your location for accuracy'},
+  'updateLocation': {'ar': 'تحديد الموقع', 'en': 'Set location'},
+  'locationDenied': {
+    'ar': 'لم نتمكن من معرفة موقعك، سنستخدم أوقاتاً تقريبية',
+    'en': 'Could not get your location, using approximate times',
+  },
   'notifWebOnly': {
     'ar': 'هذه معاينة: التنبيهات الفعلية تعمل على الجوال',
     'en': 'Preview only: real notifications work on the phone',

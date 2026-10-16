@@ -72,3 +72,13 @@ const reminderPhrases = <ReminderPhrase>[
 
 /// صوت التهنئة عند كل ١٠٠ تسبيحة ("ممتاز" في النسخة الأصلية).
 const celebrationSound = 'mumtaz';
+
+/// نصوص تنبيهات أوقات التسبيح المباركة (طه: ١٣٠).
+const blessedMorningText = {
+  'ar': '﴿وَسَبِّحْ بِحَمْدِ رَبِّكَ قَبْلَ طُلُوعِ الشَّمْسِ﴾\nحان وقت التسبيح قبل الشروق',
+  'en': '"And glorify the praise of your Lord before the rising of the sun"\nTime to glorify Allah before sunrise',
+};
+const blessedEveningText = {
+  'ar': '﴿وَسَبِّحْ بِحَمْدِ رَبِّكَ ... وَقَبْلَ غُرُوبِهَا﴾\nحان وقت التسبيح قبل الغروب',
+  'en': '"...and before its setting"\nTime to glorify Allah before sunset',
+};

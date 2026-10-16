@@ -6,6 +6,8 @@
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>نستخدم موقعك التقريبي لحساب وقتي الفجر والعصر لتذكيرك بالتسبيح قبل الشروق وقبل الغروب. يبقى الموقع على جهازك.</string>
 	<key>CFBundleDisplayName</key>
 	<string>كنز المسلم</string>
 	<key>CFBundleLocalizations</key>

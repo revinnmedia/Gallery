@@ -21,6 +21,14 @@ class ReminderStream {
   final String? sound;
 }
 
+/// تنبيه في وقت محدد (أوقات التسبيح المباركة قبل الشروق وقبل الغروب).
+class FixedReminder {
+  const FixedReminder(this.when, this.body, {this.sound});
+  final DateTime when;
+  final String body;
+  final String? sound;
+}
+
 /// إعدادات التذكير التي يحتاجها جدول التنبيهات.
 class ReminderSettings {
   const ReminderSettings({
@@ -29,9 +37,13 @@ class ReminderSettings {
     required this.dndStartHour,
     required this.dndEndHour,
     required this.withDhikrSound,
+    this.fixed = const [],
   });
 
   final List<ReminderStream> streams;
+
+  /// مواعيد ثابتة لها الأولوية ولا تتأثر بفترة عدم الإزعاج (اختارها المستخدم صراحة).
+  final List<FixedReminder> fixed;
   final bool dnd;
   final int dndStartHour;
   final int dndEndHour;
@@ -122,17 +134,31 @@ class NotificationService {
     if (kIsWeb) return;
     await init();
     await _plugin.cancelAll();
-    if (s.streams.isEmpty) return;
+    if (s.streams.isEmpty && s.fixed.isEmpty) return;
 
     final now = tz.TZDateTime.now(tz.local);
+
+    // أولاً: المواعيد الثابتة (أوقات التسبيح المباركة).
+    final fixed = s.fixed.where((f) => f.when.isAfter(now)).take(maxPending ~/ 3).toList();
+    final fixedMinutes = {for (final f in fixed) f.when.millisecondsSinceEpoch ~/ 60000};
+    for (var i = 0; i < fixed.length; i++) {
+      await _schedule(
+        id: _idBase + i,
+        when: tz.TZDateTime.from(fixed[i].when, tz.local),
+        body: fixed[i].body,
+        sound: s.withDhikrSound ? fixed[i].sound : null,
+      );
+    }
+
+    // ثم التذكير المتكرر في المساحة الباقية، بدون أن يتزامن مع موعد ثابت.
     final plan = buildPlan(
       now: now,
       streams: s.streams,
       dnd: s.dnd,
       dndStartHour: s.dndStartHour,
       dndEndHour: s.dndEndHour,
-      max: maxPending,
-    );
+      max: maxPending - fixed.length,
+    ).where((p) => !fixedMinutes.contains(p.when.millisecondsSinceEpoch ~/ 60000)).toList();
 
     final rnd = Random();
     var lastPhrase = -1;
@@ -151,13 +177,13 @@ class NotificationService {
         sound = reminderPhrases[idx].sound;
       }
       await _schedule(
-        id: _idBase + i,
+        id: _idBase + fixed.length + i,
         when: tz.TZDateTime.from(plan[i].when, tz.local),
         body: body,
         sound: s.withDhikrSound ? sound : null,
       );
     }
-    debugPrint('Scheduled ${plan.length} notifications');
+    debugPrint('Scheduled ${fixed.length} blessed + ${plan.length} notifications');
   }
 
   /// يبني جدول التنبيهات القادمة من كل المصادر:

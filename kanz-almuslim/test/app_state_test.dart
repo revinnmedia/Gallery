@@ -108,4 +108,19 @@ void main() {
     expect(weekKey(DateTime(2026, 10, 23)), '2026-10-17');
     expect(weekKey(DateTime(2026, 10, 24)), '2026-10-24');
   });
+
+  test('blessed times add fixed reminders before sunrise and sunset', () async {
+    final s = await freshState({'blessedOn': true, 'blessedLat': 31.95, 'blessedLng': 35.93});
+    expect(s.anyReminderOn, isTrue);
+    expect(s.blessedApprox, isFalse);
+    final fixed = s.reminderSettings.fixed;
+    expect(fixed.length, greaterThanOrEqualTo(20)); // يومان لكل يوم، ١٠ أيام قادمة
+    expect(fixed.every((f) => f.when.isAfter(DateTime.now())), isTrue);
+    expect(fixed.any((f) => f.body.contains('قَبْلَ طُلُوعِ الشَّمْسِ')), isTrue);
+    expect(fixed.any((f) => f.body.contains('غُرُوبِهَا')), isTrue);
+
+    final off = await freshState();
+    expect(off.reminderSettings.fixed, isEmpty);
+    expect(off.blessedApprox, isTrue);
+  });
 }

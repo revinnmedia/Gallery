@@ -9,6 +9,7 @@ import '../models.dart';
 import '../services/audio_service.dart';
 import '../services/cloud_service.dart';
 import '../services/games_service.dart';
+import '../services/blessed_times.dart';
 import '../services/notification_service.dart';
 
 /// نتيجة كل تسبيحة، لتعرف الواجهة إن كان يجب عرض التهنئة.
@@ -45,6 +46,11 @@ class AppState extends ChangeNotifier {
 
   // التذكير (نفس خيارات النسخة الأصلية)
   bool autoReminder = false;
+
+  /// أوقات التسبيح المباركة: قبل الشروق وقبل الغروب، حسب موقع المستخدم.
+  bool blessedOn = false;
+  double? blessedLat;
+  double? blessedLng;
   int autoInterval = 30;
   bool customReminderOn = false;
   List<CustomReminder> customReminders = [];
@@ -108,6 +114,9 @@ class AppState extends ChangeNotifier {
     language = _prefs.getString('language') ?? 'ar';
 
     autoReminder = _prefs.getBool('autoReminder') ?? false;
+    blessedOn = _prefs.getBool('blessedOn') ?? false;
+    blessedLat = _prefs.getDouble('blessedLat');
+    blessedLng = _prefs.getDouble('blessedLng');
     autoInterval = _prefs.getInt('autoInterval') ?? 30;
     customReminderOn = _prefs.getBool('customReminderOn') ?? false;
     dnd = _prefs.getBool('dnd') ?? false;
@@ -141,6 +150,11 @@ class AppState extends ChangeNotifier {
 
   void _saveReminders() {
     _prefs.setBool('autoReminder', autoReminder);
+    _prefs.setBool('blessedOn', blessedOn);
+    if (blessedLat != null && blessedLng != null) {
+      _prefs.setDouble('blessedLat', blessedLat!);
+      _prefs.setDouble('blessedLng', blessedLng!);
+    }
     _prefs.setInt('autoInterval', autoInterval);
     _prefs.setBool('customReminderOn', customReminderOn);
     _prefs.setBool('dnd', dnd);
@@ -307,9 +321,37 @@ class AppState extends ChangeNotifier {
     dndStartHour: dndStartHour,
     dndEndHour: dndEndHour,
     withDhikrSound: reminderSound,
+    fixed: [
+      if (blessedOn)
+        for (final b in BlessedTimes.upcoming(now: DateTime.now(), lat: blessedCoords.$1, lng: blessedCoords.$2))
+          FixedReminder(
+            b.when,
+            (b.morning ? blessedMorningText : blessedEveningText)[language == 'ar' ? 'ar' : 'en']!,
+            sound: 'subhanallah',
+          ),
+    ],
   );
 
+  /// بدون إذن الموقع نحسب الأوقات تقريبياً من فرق التوقيت.
+  bool get blessedApprox => blessedLat == null || blessedLng == null;
+  (double, double) get blessedCoords => blessedApprox
+      ? BlessedTimes.approximate(DateTime.now().timeZoneOffset)
+      : (blessedLat!, blessedLng!);
+
+  /// أوقات اليوم (للعرض في شاشة التذكير).
+  (DateTime morning, DateTime evening) get blessedToday =>
+      BlessedTimes.remindersFor(BlessedTimes.dayTimes(blessedCoords.$1, blessedCoords.$2, DateTime.now()));
+
+  Future<void> setBlessedLocation(double lat, double lng) async {
+    blessedLat = lat;
+    blessedLng = lng;
+    _saveReminders();
+    notifyListeners();
+    await applyReminders();
+  }
+
   bool get anyReminderOn =>
+      blessedOn ||
       autoReminder ||
       (customReminderOn && customReminders.any((r) => r.enabled));
 
@@ -318,6 +360,7 @@ class AppState extends ChangeNotifier {
       NotificationService.instance.rescheduleAll(reminderSettings);
 
   Future<void> updateReminders({
+    bool? blessed,
     bool? auto,
     int? interval,
     bool? custom,
@@ -326,6 +369,7 @@ class AppState extends ChangeNotifier {
     int? dndEnd,
     bool? sound,
   }) async {
+    blessedOn = blessed ?? blessedOn;
     autoReminder = auto ?? autoReminder;
     if (interval != null) {
       autoInterval = interval.clamp(NotificationService.minInterval, 24 * 60);
