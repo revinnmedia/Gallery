@@ -134,4 +134,18 @@ void main() {
     await t.pumpAndSettle();
     await shot(t, '07_manage');
   });
+
+  // لقطات من حركة الإصبع (للمراجعة فقط، لا تُحفظ في git).
+  testWidgets('08 motion frames', (t) async {
+    if (_store) return;
+    await _pump(t, await _state());
+    await t.tapAt(const Offset(196, 450));
+    var ms = 0;
+    for (final at in [120, 260, 420, 650, 900, 1150, 1500]) {
+      await t.pump(Duration(milliseconds: at - ms));
+      ms = at;
+      await expectLater(find.byType(MaterialApp), matchesGoldenFile('motion/m_${at.toString().padLeft(4, '0')}.png'));
+    }
+    await t.pumpAndSettle();
+  });
 }

@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 
 import '../theme.dart';
@@ -8,22 +6,37 @@ import '../theme.dart';
 class FingersController {
   _FingersRowState? _state;
 
-  /// يطلق الإصبع التالي للأعلى.
-  void launch() => _state?._launchNext();
+  /// هل يوجد إصبع جاهز للانطلاق؟
+  bool get canLaunch => _state?._nextReady() != null;
+
+  /// يطلق الإصبع التالي للأعلى. [payload] يعود مع [FingersRow.onMorphed].
+  bool launch(int payload) => _state?._launchNext(payload) ?? false;
 }
+
+/// يُستدعى عندما يكتمل تحوّل الإصبع إلى نقطة: مركزها (إحداثيات الشاشة) وقطرها.
+typedef FingerMorphed = void Function(Offset globalCenter, double size, int payload);
 
 /// الأصابع الخمسة أسفل شاشة التسبيح (من تصميم النسخة الأصلية).
 ///
-/// مع كل تسبيحة يطير إصبع للأعلى مع توهّج خفيف ويتلاشى تدريجياً،
-/// وتنتشر موجة دائرية من مكانه. بعد اختفاء الخامس تعود كلها بارتداد ناعم.
+/// مع كل تسبيحة يصعد إصبع ويتحوّل تدريجياً إلى نقطة مضيئة، ثم تُسلَّم
+/// النقطة لـ[FingerMorphed] لتكمل طريقها حول السبحة.
+/// الأصابع تختفي واحداً واحداً، وبعد اختفاء الخامس تعود كلها بارتداد ناعم.
 /// يمكن أيضاً سحب أي إصبع للأعلى مباشرة.
 class FingersRow extends StatefulWidget {
-  const FingersRow({super.key, required this.controller, required this.onCount, this.count = 5});
+  const FingersRow({
+    super.key,
+    required this.controller,
+    required this.onSwipe,
+    required this.onMorphed,
+    this.count = 5,
+  });
 
   final FingersController controller;
 
-  /// يُستدعى عند سحب إصبع للأعلى (اللمس العادي يُحسب من الشاشة).
-  final VoidCallback onCount;
+  /// يُستدعى عند سحب إصبع للأعلى (اللمس العادي يُحسب من الشاشة)،
+  /// ويرجع القيمة التي تُمرَّر لاحقاً مع [onMorphed].
+  final int Function() onSwipe;
+  final FingerMorphed onMorphed;
   final int count;
 
   @override
@@ -31,12 +44,17 @@ class FingersRow extends StatefulWidget {
 }
 
 class _FingersRowState extends State<FingersRow> with TickerProviderStateMixin {
-  static const _flyDuration = Duration(milliseconds: 520);
+  static const _flyDuration = Duration(milliseconds: 420);
+
+  /// كم يصعد الإصبع (نسبة من ارتفاعه) وحجم النقطة (نسبة من عرضه).
+  static const riseFactor = 0.55;
+  static const dotFactor = 0.5;
   static const _growDuration = Duration(milliseconds: 460);
 
   late final List<AnimationController> _fly;
   late final List<AnimationController> _grow;
   late final List<double> _drag;
+  late final List<GlobalKey> _keys;
 
   @override
   void initState() {
@@ -48,6 +66,7 @@ class _FingersRowState extends State<FingersRow> with TickerProviderStateMixin {
       (_) => AnimationController(vsync: this, duration: _growDuration, value: 1),
     );
     _drag = List.filled(widget.count, 0);
+    _keys = List.generate(widget.count, (_) => GlobalKey());
   }
 
   @override
@@ -72,20 +91,33 @@ class _FingersRowState extends State<FingersRow> with TickerProviderStateMixin {
   /// كل الأصابع طارت واختفت.
   bool get _allGone => _fly.every((f) => f.value == 1 && !f.isAnimating);
 
-  /// يطلق أول إصبع جاهز بالترتيب. الأصابع تختفي واحداً واحداً
-  /// ولا تعود إلا بعد اختفاء آخر إصبع. العدّ لا يتوقف في الأثناء.
-  void _launchNext() {
+  int? _nextReady() {
     for (var i = 0; i < widget.count; i++) {
-      if (_ready(i)) {
-        _animate(i);
-        return;
-      }
+      if (_ready(i)) return i;
     }
+    return null;
   }
 
-  Future<void> _animate(int i) async {
+  /// يطلق أول إصبع جاهز بالترتيب. الأصابع تختفي واحداً واحداً
+  /// ولا تعود إلا بعد اختفاء آخر إصبع. العدّ لا يتوقف في الأثناء.
+  bool _launchNext(int payload) {
+    final i = _nextReady();
+    if (i == null) return false;
+    _animate(i, payload);
+    return true;
+  }
+
+  Future<void> _animate(int i, int payload) async {
     await _fly[i].forward(from: 0);
     if (!mounted) return;
+    final box = _keys[i].currentContext?.findRenderObject() as RenderBox?;
+    if (box != null && box.hasSize) {
+      final w = box.size.width;
+      final h = box.size.height;
+      final dot = w * dotFactor;
+      final center = Offset(w / 2, h + _drag[i] - h * riseFactor - dot / 2);
+      widget.onMorphed(box.localToGlobal(center), dot, payload);
+    }
     setState(() => _drag[i] = 0);
     if (_allGone) await _regrowAll();
   }
@@ -127,13 +159,13 @@ class _FingersRowState extends State<FingersRow> with TickerProviderStateMixin {
                 onVerticalDragEnd: (d) {
                   final v = d.primaryVelocity ?? 0;
                   if (_ready(i) && (_drag[i] < -24 || v < -220)) {
-                    widget.onCount();
-                    _animate(i);
+                    _animate(i, widget.onSwipe());
                   } else {
                     setState(() => _drag[i] = 0);
                   }
                 },
                 child: SizedBox(
+                  key: _keys[i],
                   width: w,
                   height: h,
                   child: AnimatedBuilder(
@@ -177,31 +209,35 @@ class _FingerFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // الطيران: صعود سريع يتباطأ، تلاشٍ يتسارع، وتضيّق بسيط.
+    // طار وتحوّل إلى نقطة: النقطة الآن في طبقة المدار.
+    if (fly >= 1) return const SizedBox.shrink();
+
+    // الصعود: انطلاقة سريعة تتباطأ، والتحوّل إلى نقطة يتسارع مع الصعود.
     final rise = Curves.easeOutCubic.transform(fly);
-    final fade = 1 - Curves.easeInQuad.transform(fly);
-    final squeeze = 1 - 0.18 * rise;
-    final glow = sin(pi * fly); // يتوهج في منتصف الحركة.
+    final morph = Curves.easeInOutCubic.transform(fly);
+    final dot = width * _FingersRowState.dotFactor;
+    final w = width + (dot - width) * morph;
+    final h = height + (dot - height) * morph;
+    final glow = Curves.easeIn.transform(fly);
 
     // العودة: نمو من الأسفل مع ارتداد ناعم.
     final regrow = Curves.easeOutBack.transform(grow).clamp(0.0, 1.08);
-
-    final dy = drag - rise * (height * 1.6) + (1 - regrow) * height;
+    final dy = drag - rise * height * _FingersRowState.riseFactor + (1 - regrow) * height;
 
     return Stack(
       clipBehavior: Clip.none,
       alignment: Alignment.bottomCenter,
       children: [
         // موجة دائرية تنتشر من مكان الإصبع عند انطلاقه.
-        if (fly > 0 && fly < 1)
+        if (fly > 0)
           Positioned(
-            top: width * 0.1,
+            bottom: height * 0.15,
             child: IgnorePointer(
               child: Opacity(
-                opacity: (1 - fly) * 0.7,
+                opacity: (1 - fly) * 0.6,
                 child: Container(
-                  width: width * (0.6 + 1.2 * rise),
-                  height: width * (0.6 + 1.2 * rise),
+                  width: width * (0.7 + 1.1 * rise),
+                  height: width * (0.7 + 1.1 * rise),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(color: KanzColors.cyan, width: 2 * (1 - fly) + 0.5),
@@ -212,14 +248,7 @@ class _FingerFrame extends StatelessWidget {
           ),
         Transform.translate(
           offset: Offset(0, dy),
-          child: Opacity(
-            opacity: fade.clamp(0.0, 1.0),
-            child: Transform.scale(
-              scaleX: squeeze,
-              alignment: Alignment.bottomCenter,
-              child: _Finger(width: width, height: height, lead: lead, glow: glow),
-            ),
-          ),
+          child: _Finger(width: w, height: h, lead: lead, glow: glow, morph: morph),
         ),
       ],
     );
@@ -227,38 +256,57 @@ class _FingerFrame extends StatelessWidget {
 }
 
 class _Finger extends StatelessWidget {
-  const _Finger({required this.width, required this.height, required this.lead, required this.glow});
+  const _Finger({
+    required this.width,
+    required this.height,
+    required this.lead,
+    required this.glow,
+    required this.morph,
+  });
   final double width;
   final double height;
   final bool lead;
   final double glow;
+  final double morph;
 
   @override
   Widget build(BuildContext context) {
+    final top = lead ? KanzColors.pillarActiveTop : KanzColors.pillarTop;
+    final bottom = lead ? KanzColors.pillarActiveBottom : KanzColors.pillarBottom;
+    // يبيضّ لونه تدريجياً كلما اقترب من شكل النقطة.
+    final c1 = Color.lerp(top, Colors.white, morph * 0.85)!;
+    final c2 = Color.lerp(bottom, KanzColors.beadLit, morph)!;
+    final arrow = (1 - morph * 2.2).clamp(0.0, 1.0);
     return Container(
       width: width,
       height: height,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(width / 2)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(width / 2),
+          bottom: Radius.circular(width / 2 * morph),
+        ),
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: lead
-              ? const [KanzColors.pillarActiveTop, KanzColors.pillarActiveBottom]
-              : const [KanzColors.pillarTop, KanzColors.pillarBottom],
+          colors: [c1, c2],
         ),
         boxShadow: [
           if (glow > 0)
             BoxShadow(
-              color: KanzColors.cyan.withValues(alpha: 0.55 * glow),
-              blurRadius: 22 * glow,
+              color: KanzColors.cyan.withValues(alpha: 0.6 * glow),
+              blurRadius: 4 + 18 * glow,
               spreadRadius: 1,
             ),
         ],
       ),
       alignment: Alignment.topCenter,
       padding: EdgeInsets.only(top: width * 0.2),
-      child: Icon(Icons.keyboard_arrow_up, size: width * 0.62, color: KanzColors.pillarChevron),
+      child: arrow > 0
+          ? Opacity(
+              opacity: arrow,
+              child: Icon(Icons.keyboard_arrow_up, size: width * 0.62, color: KanzColors.pillarChevron),
+            )
+          : null,
     );
   }
 }
