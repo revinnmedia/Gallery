@@ -15,13 +15,43 @@ class ManageDhikrScreen extends StatelessWidget {
     final state = context.watch<AppState>();
     return Scaffold(
       appBar: AppBar(title: Text(tr(context, 'manageDhikr'))),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _edit(context, null),
-        icon: const Icon(Icons.add),
-        label: Text(tr(context, 'addDhikr')),
+      // زر رجوع واضح أسفل الشاشة بجانب الإضافة (لا يعتمد على شريط العنوان فقط).
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: KanzColors.cardBlue,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size.fromHeight(52),
+                  ),
+                  onPressed: () => _edit(context, null),
+                  icon: const Icon(Icons.add),
+                  label: Text(tr(context, 'addDhikr')),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: KanzColors.cyan),
+                    minimumSize: const Size.fromHeight(52),
+                  ),
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.check),
+                  label: Text(tr(context, 'done')),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
       body: ReorderableListView.builder(
-        padding: const EdgeInsets.only(bottom: 96, top: 8),
+        padding: const EdgeInsets.only(bottom: 16, top: 8),
         itemCount: state.dhikrs.length,
         onReorderItem: state.reorderDhikr,
         itemBuilder: (context, i) {
