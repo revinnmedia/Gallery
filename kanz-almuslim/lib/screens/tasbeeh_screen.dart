@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n.dart';
+import '../services/cloud_service.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/bead_ring.dart';
@@ -20,7 +21,6 @@ class TasbeehScreen extends StatefulWidget {
 }
 
 class _TasbeehScreenState extends State<TasbeehScreen> with TickerProviderStateMixin {
-  late final PageController _pages;
   late final AnimationController _pulse;
   bool _celebrating = false;
   final _fingers = FingersController();
@@ -43,8 +43,6 @@ class _TasbeehScreenState extends State<TasbeehScreen> with TickerProviderStateM
   @override
   void initState() {
     super.initState();
-    final state = context.read<AppState>();
-    _pages = PageController(initialPage: state.currentIndex);
     _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 140));
     _shake = AnimationController(vsync: this, duration: const Duration(milliseconds: 420));
     _scatter = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
@@ -52,7 +50,6 @@ class _TasbeehScreenState extends State<TasbeehScreen> with TickerProviderStateM
 
   @override
   void dispose() {
-    _pages.dispose();
     _pulse.dispose();
     _shake.dispose();
     _scatter.dispose();
@@ -151,6 +148,14 @@ class _TasbeehScreenState extends State<TasbeehScreen> with TickerProviderStateM
     setState(_incoming.clear);
   }
 
+  /// الذكر التالي/السابق (بالأسهم أو بالسحب أفقياً على السبحة).
+  void _step(AppState state, int delta) {
+    final n = state.dhikrs.length;
+    if (n < 2) return;
+    _clearFlights();
+    state.selectDhikr((state.currentIndex + delta) % n);
+  }
+
   Future<void> _celebrate() async {
     _celebrating = true;
     final state = context.read<AppState>();
@@ -168,13 +173,6 @@ class _TasbeehScreenState extends State<TasbeehScreen> with TickerProviderStateM
     final d = state.current;
     final cycle = _fresh ? 0 : state.displayCount;
     final lit = _fresh ? 0 : _litFor(state);
-
-    // نحافظ على تزامن الصفحة إذا تغيّر الذكر من شاشة الإدارة.
-    if (_pages.hasClients && _pages.page?.round() != state.currentIndex) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_pages.hasClients) _pages.jumpToPage(state.currentIndex);
-      });
-    }
 
     return PatternBackground(
       child: Stack(
@@ -210,84 +208,92 @@ class _TasbeehScreenState extends State<TasbeehScreen> with TickerProviderStateM
                       onTap: _onTap,
                       child: Column(
                         children: [
-                          SizedBox(
-                            height: 78,
-                            child: PageView.builder(
-                              controller: _pages,
-                              itemCount: state.dhikrs.length,
-                              onPageChanged: (i) {
-                                _clearFlights();
-                                state.selectDhikr(i);
-                              },
-                              itemBuilder: (_, i) => Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                                  child: FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    child: Text(
-                                      state.dhikrs[i].text,
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        fontSize: 36,
-                                        height: 1.5,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w500,
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(2, 6, 2, 0),
+                              child: Row(
+                                children: [
+                                  // في العربية: السهم الأيمن للسابق، والأيسر للتالي.
+                                  _Arrow(right: true, onTap: () => _step(state, -1)),
+                                  Expanded(
+                                    child: GestureDetector(
+                                      onHorizontalDragEnd: (e) {
+                                        final v = e.primaryVelocity ?? 0;
+                                        if (v.abs() > 200) _step(state, v > 0 ? 1 : -1);
+                                      },
+                                      child: ScaleTransition(
+                                        scale: Tween(begin: 1.0, end: 0.97).animate(
+                                          CurvedAnimation(
+                                            parent: _pulse,
+                                            curve: Curves.easeOut,
+                                            reverseCurve: Curves.easeIn,
+                                          ),
+                                        ),
+                                        child: BeadRing(
+                                          key: _ring,
+                                          lit: lit,
+                                          hidden: _incoming.toSet(),
+                                          scatter: _scatter,
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                fmtNum(context, cycle),
+                                                style: const TextStyle(
+                                                  fontSize: 64,
+                                                  fontWeight: FontWeight.w300,
+                                                  color: Colors.white,
+                                                  height: 1.1,
+                                                ),
+                                              ),
+                                              Text(
+                                                '/ ${fmtNum(context, d.target)}',
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  color: Colors.white.withValues(alpha: 0.7),
+                                                ),
+                                              ),
+                                              const SizedBox(height: 10),
+                                              // اسم الذكر داخل السبحة (من التصميم الأصلي).
+                                              AnimatedSwitcher(
+                                                duration: const Duration(milliseconds: 220),
+                                                child: ConstrainedBox(
+                                                  key: ValueKey(d.id),
+                                                  constraints: const BoxConstraints(
+                                                    maxWidth: 210,
+                                                    maxHeight: 64,
+                                                  ),
+                                                  child: FittedBox(
+                                                    fit: BoxFit.scaleDown,
+                                                    child: Text(
+                                                      d.text,
+                                                      textAlign: TextAlign.center,
+                                                      style: const TextStyle(
+                                                        fontSize: 26,
+                                                        height: 1.4,
+                                                        color: Colors.white,
+                                                        fontWeight: FontWeight.w500,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
+                                  _Arrow(right: false, onTap: () => _step(state, 1)),
+                                ],
                               ),
                             ),
                           ),
+                          const SizedBox(height: 8),
                           _Dots(count: state.dhikrs.length, index: state.currentIndex),
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(24, 10, 24, 6),
-                              child: ScaleTransition(
-                                scale: Tween(begin: 1.0, end: 0.97).animate(
-                                  CurvedAnimation(
-                                    parent: _pulse,
-                                    curve: Curves.easeOut,
-                                    reverseCurve: Curves.easeIn,
-                                  ),
-                                ),
-                                child: BeadRing(
-                                  key: _ring,
-                                  lit: lit,
-                                  hidden: _incoming.toSet(),
-                                  scatter: _scatter,
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        fmtNum(context, cycle),
-                                        style: const TextStyle(
-                                          fontSize: 64,
-                                          fontWeight: FontWeight.w300,
-                                          color: Colors.white,
-                                          height: 1.1,
-                                        ),
-                                      ),
-                                      Text(
-                                        '/ ${fmtNum(context, d.target)}',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          color: Colors.white.withValues(alpha: 0.7),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Text(
-                            tr(context, 'tapToCount'),
-                            style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 13),
-                          ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 14),
                           SizedBox(
-                            height: 150,
+                            height: 170,
                             child: FingersRow(
                               controller: _fingers,
                               onSwipe: () => _count(fly: true),
@@ -309,6 +315,7 @@ class _TasbeehScreenState extends State<TasbeehScreen> with TickerProviderStateM
   }
 }
 
+/// الرأس (من التصميم الأصلي): العنوان، ثم بطاقة الاسم مع الكأس والمجموع.
 class _TopBar extends StatelessWidget {
   const _TopBar({
     required this.today,
@@ -327,26 +334,101 @@ class _TopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final name = context.watch<CloudService>().displayName;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 12, 0),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+      child: Column(
         children: [
-          _Stat(label: tr(context, 'today'), value: fmtNum(context, today)),
-          const SizedBox(width: 10),
-          _Stat(label: tr(context, 'total'), value: fmtNum(context, total)),
-          const Spacer(),
-          _RoundButton(
-            icon: soundOn ? Icons.volume_up : Icons.volume_off,
-            tooltip: tr(context, 'sound'),
-            onPressed: onSound,
+          SizedBox(
+            height: 48,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Text(
+                  tr(context, 'appName'),
+                  style: const TextStyle(color: Colors.white, fontSize: 21, fontWeight: FontWeight.w500),
+                ),
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: _RoundButton(
+                    icon: Icons.format_list_bulleted,
+                    tooltip: tr(context, 'manageDhikr'),
+                    onPressed: onManage,
+                  ),
+                ),
+                Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _RoundButton(
+                        icon: Icons.refresh,
+                        tooltip: tr(context, 'resetCycle'),
+                        onPressed: onReset,
+                      ),
+                      const SizedBox(width: 6),
+                      _RoundButton(
+                        icon: soundOn ? Icons.volume_up : Icons.volume_off,
+                        tooltip: tr(context, 'sound'),
+                        onPressed: onSound,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(width: 6),
-          _RoundButton(icon: Icons.refresh, tooltip: tr(context, 'resetCycle'), onPressed: onReset),
-          const SizedBox(width: 6),
-          _RoundButton(
-            icon: Icons.format_list_bulleted,
-            tooltip: tr(context, 'manageDhikr'),
-            onPressed: onManage,
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 8, 8, 8),
+            decoration: BoxDecoration(color: KanzColors.cardBlue, borderRadius: BorderRadius.circular(14)),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name.isEmpty ? tr(context, 'guest') : name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 19,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        '${tr(context, 'today')}: ${fmtNum(context, today)}',
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: KanzColors.trophyBox,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.emoji_events, color: KanzColors.gold, size: 30),
+                      const SizedBox(width: 6),
+                      Text(
+                        fmtNum(context, total),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -354,28 +436,22 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-class _Stat extends StatelessWidget {
-  const _Stat({required this.label, required this.value});
-  final String label;
-  final String value;
+/// سهم تبديل الذكر بجانب السبحة.
+class _Arrow extends StatelessWidget {
+  const _Arrow({required this.right, required this.onTap});
+  final bool right;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11)),
-          Text(
-            value,
-            style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
-          ),
-        ],
+    return IconButton(
+      onPressed: onTap,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(minWidth: 36, minHeight: 64),
+      // الاتجاه ثابت مهما كانت لغة الواجهة.
+      icon: Directionality(
+        textDirection: TextDirection.ltr,
+        child: Icon(right ? Icons.chevron_right : Icons.chevron_left, color: Colors.white, size: 40),
       ),
     );
   }
