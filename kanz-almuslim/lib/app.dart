@@ -6,6 +6,7 @@ import 'screens/home_shell.dart';
 import 'services/cloud_service.dart';
 import 'state/app_state.dart';
 import 'theme.dart';
+import 'widgets/kanz_ui.dart';
 
 class KanzApp extends StatefulWidget {
   const KanzApp({super.key});
@@ -52,6 +53,8 @@ class _KanzAppState extends State<KanzApp> with WidgetsBindingObserver {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
+      // الخلفية المتدرجة الأصلية خلف كل الشاشات.
+      builder: (context, child) => KanzBackground(child: child ?? const SizedBox()),
       // إعادة بناء كل الشاشات عند تغيير اللغة.
       home: KeyedSubtree(
         key: ValueKey(state.language),

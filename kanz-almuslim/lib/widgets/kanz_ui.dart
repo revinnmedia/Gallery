@@ -17,7 +17,7 @@ class KanzBackground extends StatelessWidget {
   );
 }
 
-/// صفحة بالشكل الأصلي: خلفية متدرجة + شريط عنوان علوي.
+/// صفحة بعنوان علوي (بأسلوب الترتيب الجديد) فوق الخلفية المتدرجة.
 class KanzPage extends StatelessWidget {
   const KanzPage({
     super.key,
@@ -30,8 +30,6 @@ class KanzPage extends StatelessWidget {
 
   final String title;
   final Widget body;
-
-  /// زر القلب في أعلى اليسار (يفتح شاشة الدعم).
   final VoidCallback? onHeart;
   final bool showBack;
   final Widget? action;
@@ -39,20 +37,16 @@ class KanzPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: KanzBackground(
-        child: Column(
-          children: [
-            KanzHeader(
-              title: title,
-              onHeart: onHeart,
-              showBack: showBack,
-              action: action,
-            ),
-            Expanded(child: body),
-          ],
-        ),
+      appBar: AppBar(
+        title: Text(title),
+        automaticallyImplyLeading: showBack,
+        actions: [
+          ?action,
+          if (onHeart != null)
+            IconButton(onPressed: onHeart, icon: const Icon(Icons.favorite_border)),
+        ],
       ),
+      body: body,
     );
   }
 }

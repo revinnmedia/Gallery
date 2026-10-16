@@ -2,18 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n.dart';
-import '../services/cloud_service.dart';
-import '../services/games_service.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
-import '../widgets/bead_ring.dart';
-import '../widgets/kanz_ui.dart';
-import '../widgets/swipe_pillars.dart';
-import 'ranking_screen.dart';
-import 'sign_in_sheet.dart';
-import 'support_screen.dart';
+import '../widgets/counter_ring.dart';
+import '../widgets/pattern_background.dart';
+import 'manage_dhikr_screen.dart';
 
-/// شاشة السبحة الرئيسية بنفس تصميم النسخة الأصلية.
 class TasbeehScreen extends StatefulWidget {
   const TasbeehScreen({super.key});
 
@@ -21,208 +15,151 @@ class TasbeehScreen extends StatefulWidget {
   State<TasbeehScreen> createState() => _TasbeehScreenState();
 }
 
-class _TasbeehScreenState extends State<TasbeehScreen> {
+class _TasbeehScreenState extends State<TasbeehScreen> with SingleTickerProviderStateMixin {
+  late final PageController _pages;
+  late final AnimationController _pulse;
   bool _celebrating = false;
 
-  void _count() {
+  @override
+  void initState() {
+    super.initState();
+    final state = context.read<AppState>();
+    _pages = PageController(initialPage: state.currentIndex);
+    _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 140));
+  }
+
+  @override
+  void dispose() {
+    _pages.dispose();
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  void _onTap() {
+    if (_celebrating) return;
     final result = context.read<AppState>().tap();
-    if (result.hundred && !_celebrating) _celebrate();
+    _pulse.forward(from: 0);
+    if (result.hundred) _celebrate();
   }
 
   Future<void> _celebrate() async {
     _celebrating = true;
-    final total = context.read<AppState>().total;
+    final state = context.read<AppState>();
     await showDialog<void>(
       context: context,
-      builder: (_) => _HundredDialog(total: total),
+      barrierDismissible: true,
+      builder: (ctx) => _CelebrationDialog(total: state.total),
     );
     _celebrating = false;
   }
 
-  void _step(int delta) {
-    final s = context.read<AppState>();
-    final n = s.dhikrs.length;
-    s.selectDhikr((s.currentIndex + delta + n) % n);
-  }
-
   @override
   Widget build(BuildContext context) {
-    final s = context.watch<AppState>();
-    final d = s.current;
-    final lit = d.target == 33 || d.target <= 0
-        ? s.displayCount
-        : (s.displayCount * 33 / d.target).round();
+    final state = context.watch<AppState>();
+    final d = state.current;
+    final cycle = state.displayCount;
+    final progress = d.target > 0 ? cycle / d.target : 0.0;
 
-    return KanzPage(
-      title: tr(context, 'appName'),
-      onHeart: () =>
-          Navigator.of(context)
-              .push(MaterialPageRoute(builder: (_) => const SupportScreen())),
-      body: Column(
-        children: [
-          const _UserCard(),
-          Expanded(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: _count,
-              onHorizontalDragEnd: (e) {
-                final v = e.primaryVelocity ?? 0;
-                if (v.abs() > 200) _step(v < 0 ? 1 : -1);
-              },
-              child: Directionality(
-                textDirection: TextDirection.ltr,
-                child: Row(
+    // نحافظ على تزامن الصفحة إذا تغيّر الذكر من شاشة الإدارة.
+    if (_pages.hasClients && _pages.page?.round() != state.currentIndex) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_pages.hasClients) _pages.jumpToPage(state.currentIndex);
+      });
+    }
+
+    return PatternBackground(
+      child: SafeArea(
+        child: Column(
+          children: [
+            _TopBar(
+              today: state.todayTotal,
+              total: state.total,
+              onManage: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ManageDhikrScreen()),
+              ),
+            ),
+            Expanded(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: _onTap,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _Arrow(
-                      icon: Icons.arrow_back_ios_new,
-                      onTap: () => _step(-1),
-                    ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        child: BeadRing(
-                          lit: lit,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                '${s.displayCount}',
+                    SizedBox(
+                      height: 110,
+                      child: PageView.builder(
+                        controller: _pages,
+                        itemCount: state.dhikrs.length,
+                        onPageChanged: state.selectDhikr,
+                        itemBuilder: (_, i) => Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 32),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                state.dhikrs[i].text,
+                                textAlign: TextAlign.center,
                                 style: const TextStyle(
-                                  fontSize: 64,
-                                  fontWeight: FontWeight.w200,
+                                  fontSize: 40,
+                                  height: 1.6,
                                   color: Colors.white,
-                                  height: 1.1,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
-                              const SizedBox(height: 8),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 40,
-                                ),
-                                child: Text(
-                                  d.text,
-                                  textAlign: TextAlign.center,
-                                  maxLines: 2,
-                                  style: const TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w300,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
                       ),
                     ),
-                    _Arrow(
-                      icon: Icons.arrow_forward_ios,
-                      onTap: () => _step(1),
+                    _Dots(count: state.dhikrs.length, index: state.currentIndex),
+                    const SizedBox(height: 28),
+                    ScaleTransition(
+                      scale: Tween(begin: 1.0, end: 0.96).animate(
+                        CurvedAnimation(parent: _pulse, curve: Curves.easeOut, reverseCurve: Curves.easeIn),
+                      ),
+                      child: CounterRing(
+                        progress: progress,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              fmtNum(context, cycle),
+                              style: const TextStyle(
+                                fontSize: 76,
+                                fontWeight: FontWeight.w300,
+                                color: Colors.white,
+                                height: 1.1,
+                              ),
+                            ),
+                            Text(
+                              '/ ${fmtNum(context, d.target)}',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.white.withValues(alpha: 0.75),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      tr(context, 'tapToCount'),
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 15),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      tr(context, 'swipeToChange'),
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.55), fontSize: 12),
                     ),
                   ],
                 ),
               ),
             ),
-          ),
-          _Dots(count: s.dhikrs.length, index: s.currentIndex),
-          const SizedBox(height: 18),
-          SizedBox(height: 180, child: SwipePillars(onCount: _count)),
-        ],
-      ),
-    );
-  }
-}
-
-/// بطاقة المستخدم: الاسم والعضوية على اليمين، والكأس مع النقاط على اليسار.
-class _UserCard extends StatelessWidget {
-  const _UserCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final s = context.watch<AppState>();
-    final cloud = context.watch<CloudService>();
-    final name = cloud.signedIn ? cloud.displayName : tr(context, 'guest');
-    final sub = s.premium
-        ? tr(context, 'premiumMember')
-        : tr(context, 'normalMember');
-    return GestureDetector(
-      onTap: () {
-        // بدون سيرفر: لوحة Game Center / Play Games مباشرة.
-        if (!cloud.available) {
-          GamesService.instance.showLeaderboard();
-          return;
-        }
-        if (cloud.signedIn) {
-          Navigator.of(context)
-              .push(MaterialPageRoute(builder: (_) => const RankingScreen()));
-        } else {
-          showSignInSheet(context);
-        }
-      },
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(10, 10, 10, 0),
-        height: 56,
-        decoration: BoxDecoration(
-          color: KanzColors.cardBlue,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 70),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 19,
-                        fontWeight: FontWeight.w300,
-                        color: Colors.white,
-                      ),
-                    ),
-                    Text(
-                      sub,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w300,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Container(
-              margin: const EdgeInsets.all(4),
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              height: 36,
-              color: KanzColors.trophyBox,
-              child: Directionality(
-                textDirection: TextDirection.ltr,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.emoji_events,
-                      color: KanzColors.gold,
-                      size: 30,
-                    ),
-                    Text(
-                      '${s.total}',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w300,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                  ],
-                ),
-              ),
+            _BottomControls(
+              soundOn: state.soundOn,
+              onSound: () => state.setSound(!state.soundOn),
+              onReset: state.currentCycle == 0 ? null : state.resetCycle,
             ),
           ],
         ),
@@ -231,21 +168,58 @@ class _UserCard extends StatelessWidget {
   }
 }
 
-class _Arrow extends StatelessWidget {
-  const _Arrow({required this.icon, required this.onTap});
-  final IconData icon;
-  final VoidCallback onTap;
+class _TopBar extends StatelessWidget {
+  const _TopBar({required this.today, required this.total, required this.onManage});
+  final int today;
+  final int total;
+  final VoidCallback onManage;
 
   @override
-  Widget build(BuildContext context) => IconButton(
-    onPressed: onTap,
-    padding: EdgeInsets.zero,
-    constraints: const BoxConstraints(minWidth: 40, minHeight: 60),
-    icon: Icon(icon, color: Colors.white, size: 30),
-  );
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 8, 0),
+      child: Row(
+        children: [
+          _Stat(label: tr(context, 'today'), value: fmtNum(context, today)),
+          const SizedBox(width: 12),
+          _Stat(label: tr(context, 'total'), value: fmtNum(context, total)),
+          const Spacer(),
+          IconButton(
+            tooltip: tr(context, 'manageDhikr'),
+            onPressed: onManage,
+            icon: const Icon(Icons.format_list_bulleted, color: Colors.white),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-/// نقاط الصفحات: الحالية بيضاء والباقي فيروزي.
+class _Stat extends StatelessWidget {
+  const _Stat({required this.label, required this.value});
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11)),
+          Text(value,
+              style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+        ],
+      ),
+    );
+  }
+}
+
 class _Dots extends StatelessWidget {
   const _Dots({required this.count, required this.index});
   final int count;
@@ -253,28 +227,81 @@ class _Dots extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.ltr,
-      child: Wrap(
-        alignment: WrapAlignment.center,
-        children: List.generate(count, (i) {
-          return Container(
-            margin: const EdgeInsets.symmetric(horizontal: 4.5),
-            width: 7,
-            height: 7,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: i == index ? Colors.white : KanzColors.dotCyan,
-            ),
-          );
-        }),
+    if (count > 15) return const SizedBox(height: 8);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(count, (i) {
+        final active = i == index;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          width: active ? 18 : 6,
+          height: 6,
+          decoration: BoxDecoration(
+            color: active ? Colors.white : KanzColors.dotCyan.withValues(alpha: 0.55),
+            borderRadius: BorderRadius.circular(3),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+class _BottomControls extends StatelessWidget {
+  const _BottomControls({required this.soundOn, required this.onSound, required this.onReset});
+  final bool soundOn;
+  final VoidCallback onSound;
+  final VoidCallback? onReset;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _RoundButton(
+            icon: soundOn ? Icons.volume_up : Icons.volume_off,
+            tooltip: tr(context, 'sound'),
+            onPressed: onSound,
+          ),
+          _RoundButton(
+            icon: Icons.refresh,
+            tooltip: tr(context, 'resetCycle'),
+            onPressed: onReset,
+          ),
+        ],
       ),
     );
   }
 }
 
-class _HundredDialog extends StatelessWidget {
-  const _HundredDialog({required this.total});
+class _RoundButton extends StatelessWidget {
+  const _RoundButton({required this.icon, required this.tooltip, required this.onPressed});
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton.filled(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      iconSize: 24,
+      style: IconButton.styleFrom(
+        backgroundColor: Colors.white.withValues(alpha: 0.16),
+        foregroundColor: Colors.white,
+        disabledBackgroundColor: Colors.white.withValues(alpha: 0.06),
+        disabledForegroundColor: Colors.white38,
+        minimumSize: const Size(52, 52),
+      ),
+      icon: Icon(icon),
+    );
+  }
+}
+
+class _CelebrationDialog extends StatelessWidget {
+  const _CelebrationDialog({required this.total});
   final int total;
 
   @override
@@ -284,72 +311,59 @@ class _HundredDialog extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(28),
         decoration: BoxDecoration(
-          gradient: KanzColors.background,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: KanzColors.cyan),
+          gradient: KanzColors.backgroundGradient,
+          border: Border.all(color: KanzColors.cyan.withValues(alpha: 0.6)),
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 24)],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TweenAnimationBuilder<double>(
               tween: Tween(begin: 0, end: 1),
-              duration: const Duration(milliseconds: 900),
-              curve: Curves.easeOut,
-              builder: (_, v, _) => SizedBox.square(
-                dimension: 130,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    SizedBox.expand(
-                      child: CircularProgressIndicator(
-                        value: v,
-                        strokeWidth: 8,
-                        color: const Color(0xFF00D79C),
-                        backgroundColor: Colors.white12,
-                      ),
-                    ),
-                    const Text(
-                      '100',
-                      style: TextStyle(
-                        fontSize: 44,
-                        fontWeight: FontWeight.w200,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
+              duration: const Duration(milliseconds: 700),
+              curve: Curves.elasticOut,
+              builder: (_, v, child) => Transform.scale(scale: v, child: child),
+              child: Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: KanzColors.mint, width: 8),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  fmtNum(context, 100),
+                  style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w700),
                 ),
               ),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 20),
             Text(
               tr(context, 'congrats'),
-              style: const TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.w300,
-                color: Colors.white,
-              ),
+              style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w700),
             ),
             Text(
-              '${tr(context, 'youGot')} 100 ${tr(context, 'points')}',
-              style: const TextStyle(
-                fontSize: 19,
-                fontWeight: FontWeight.w300,
-                color: KanzColors.cyan,
-              ),
+              '${tr(context, 'youGot')} ${fmtNum(context, 100)} ${tr(context, 'points')}',
+              style: const TextStyle(color: KanzColors.cyan, fontSize: 18),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
-              tr(context, 'congratsBody', args: {'n': '$total'}),
-              style: const TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w300,
-                color: Colors.white,
-              ),
+              tr(context, 'congratsBody', args: {'n': fmtNum(context, total)}),
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 16),
             ),
-            const SizedBox(height: 20),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Icon(Icons.close, color: Colors.white, size: 32),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: KanzColors.bgTop,
+                ),
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(tr(context, 'continue')),
+              ),
             ),
           ],
         ),

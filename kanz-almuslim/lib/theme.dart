@@ -64,17 +64,38 @@ class KanzColors {
     colors: [bgTop, bgMid, bgBottom],
     stops: [0.05, 0.6, 0.95],
   );
+
+  // ---- أسماء ترتيب التصميم الجديد، بألوان التطبيق الأصلي ----
+
+  /// لون التمييز (أيقونات، أرقام، أزرار).
+  static const primary = beadLit;
+
+  /// الأخضر النعناعي (دائرة المئة في الأصل).
+  static const mint = Color(0xFF00D79C);
+  static const aqua = cyan;
+  static const paleAqua = Color(0xFF99DBD7);
+  static const deepBlue = bgTop;
+
+  /// خلفية البطاقات فوق التدرّج.
+  static const card = Color(0x8C005689);
+
+  /// بطاقة مميزة (ملخصات السجل، رمز الصداقة).
+  static const cardStrong = cardBlue;
+
+  static const backgroundGradient = background;
 }
 
 class KanzTheme {
   static const font = 'Tajawal';
+  static const fontFamily = font;
+  static const dhikrFont = font;
 
   static ThemeData build() {
     final scheme = ColorScheme.fromSeed(
       seedColor: KanzColors.cardBlue,
       brightness: Brightness.dark,
-      primary: KanzColors.cyan,
-      secondary: KanzColors.cyan,
+      primary: KanzColors.primary,
+      secondary: KanzColors.mint,
       surface: KanzColors.bgTop,
     );
     const white = Colors.white;
@@ -83,23 +104,87 @@ class KanzTheme {
       brightness: Brightness.dark,
       colorScheme: scheme,
       fontFamily: font,
+      // الخلفية المتدرجة مرسومة خلف كل الشاشات (انظر app.dart).
       scaffoldBackgroundColor: Colors.transparent,
       canvasColor: KanzColors.bgTop,
       textTheme: const TextTheme(
-        bodyLarge: TextStyle(fontWeight: FontWeight.w300, color: white),
-        bodyMedium: TextStyle(fontWeight: FontWeight.w300, color: white),
-        titleMedium: TextStyle(fontWeight: FontWeight.w300, color: white),
-        titleLarge: TextStyle(fontWeight: FontWeight.w300, color: white),
+        bodyLarge: TextStyle(color: white),
+        bodyMedium: TextStyle(color: white),
+        titleMedium: TextStyle(color: white, fontWeight: FontWeight.w500),
+        titleLarge: TextStyle(color: white, fontWeight: FontWeight.w500),
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        foregroundColor: white,
+        titleTextStyle: TextStyle(fontFamily: font, fontWeight: FontWeight.w700, fontSize: 20, color: white),
+      ),
+      cardTheme: CardThemeData(
+        elevation: 0,
+        color: KanzColors.card,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+        ),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      ),
+      listTileTheme: const ListTileThemeData(iconColor: KanzColors.primary, textColor: white),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: KanzColors.tabBar,
+        surfaceTintColor: Colors.transparent,
+        indicatorColor: KanzColors.cyan.withValues(alpha: 0.22),
+        iconTheme: WidgetStateProperty.resolveWith(
+          (s) => IconThemeData(color: s.contains(WidgetState.selected) ? KanzColors.cyan : white),
+        ),
+        labelTextStyle: WidgetStateProperty.resolveWith(
+          (s) => TextStyle(
+            fontFamily: font,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: s.contains(WidgetState.selected) ? KanzColors.cyan : white,
+          ),
+        ),
+      ),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: KanzColors.cardBlue,
+        foregroundColor: white,
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: KanzColors.cardBlue,
+          foregroundColor: white,
+          minimumSize: const Size(48, 52),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          textStyle: const TextStyle(fontFamily: font, fontSize: 16, fontWeight: FontWeight.w700),
+        ),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.all(white),
+        trackColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.selected) ? KanzColors.switchGreen : Colors.white24,
+        ),
+        trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: KanzColors.card,
+        selectedColor: KanzColors.cyan.withValues(alpha: 0.3),
+        labelStyle: const TextStyle(fontFamily: font, color: white),
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
+      ),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: SegmentedButton.styleFrom(
+          foregroundColor: white,
+          selectedForegroundColor: white,
+          selectedBackgroundColor: KanzColors.cardBlue,
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.25)),
+        ),
       ),
       dialogTheme: const DialogThemeData(
         backgroundColor: KanzColors.bgTop,
         titleTextStyle: TextStyle(fontFamily: font, fontSize: 20, color: white),
-        contentTextStyle: TextStyle(
-          fontFamily: font,
-          fontSize: 16,
-          color: white,
-          fontWeight: FontWeight.w300,
-        ),
+        contentTextStyle: TextStyle(fontFamily: font, fontSize: 16, color: white),
       ),
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: KanzColors.bgTop,
@@ -109,21 +194,13 @@ class KanzTheme {
         backgroundColor: KanzColors.cardBlue,
         contentTextStyle: TextStyle(fontFamily: font, color: white),
       ),
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(foregroundColor: KanzColors.cyan),
-      ),
+      textButtonTheme: TextButtonThemeData(style: TextButton.styleFrom(foregroundColor: KanzColors.cyan)),
       inputDecorationTheme: const InputDecorationTheme(
-        enabledBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: KanzColors.separator),
-        ),
-        focusedBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: KanzColors.cyan),
-        ),
+        enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: KanzColors.separator)),
+        focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: KanzColors.cyan)),
         hintStyle: TextStyle(color: Colors.white54),
       ),
-      cupertinoOverrideTheme: const CupertinoThemeData(
-        primaryColor: KanzColors.cyan,
-      ),
+      cupertinoOverrideTheme: const CupertinoThemeData(primaryColor: KanzColors.cyan),
     );
   }
 }

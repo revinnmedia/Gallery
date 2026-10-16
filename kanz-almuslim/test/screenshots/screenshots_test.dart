@@ -96,33 +96,42 @@ void main() {
     await shot(t, '02_records');
   });
 
-  testWidgets('03 notifications', (t) async {
+  testWidgets('03 ranking', (t) async {
     await _pump(t, await _state());
-    await t.tap(find.text('الاشعارات'));
+    await t.tap(find.text('الترتيب'));
     await t.pumpAndSettle();
-    await shot(t, '03_notifications');
+    await shot(t, '03_ranking');
   });
 
   testWidgets('04 settings', (t) async {
     await _pump(t, await _state());
-    await t.tap(find.text('الاعدادات'));
+    await t.tap(find.text('الإعدادات'));
     await t.pumpAndSettle();
     await shot(t, '04_settings');
   });
 
-  testWidgets('05 support', (t) async {
+  testWidgets('05 reminders', (t) async {
     await _pump(t, await _state());
-    await t.tap(find.byIcon(Icons.favorite_border).first);
+    await t.tap(find.text('الإعدادات'));
     await t.pumpAndSettle();
-    await shot(t, '05_support');
+    await t.tap(find.text('التذكير'));
+    await t.pumpAndSettle();
+    await shot(t, '05_reminders');
   });
 
   testWidgets('06 celebration', (t) async {
     final s = await _state();
     s.total = 3999;
     await _pump(t, s);
-    await t.tapAt(const Offset(196, 400));
+    await t.tapAt(const Offset(196, 450));
     await t.pumpAndSettle();
     await shot(t, '06_celebration');
+  });
+
+  testWidgets('07 manage', (t) async {
+    await _pump(t, await _state());
+    await t.tap(find.byIcon(Icons.format_list_bulleted).first);
+    await t.pumpAndSettle();
+    await shot(t, '07_manage');
   });
 }

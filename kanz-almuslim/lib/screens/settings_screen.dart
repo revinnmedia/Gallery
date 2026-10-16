@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
-
-import '../platform.dart';
-
 import 'package:in_app_review/in_app_review.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../l10n.dart';
+import '../platform.dart';
 import '../services/cloud_service.dart';
-import '../services/games_service.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
+import '../widgets/avatar.dart';
 import '../widgets/kanz_ui.dart';
 import 'about_screen.dart';
 import 'account_screen.dart';
-import 'friends_screen.dart';
 import 'manage_dhikr_screen.dart';
-import 'ranking_screen.dart';
+import 'reminders_screen.dart';
 import 'sign_in_sheet.dart';
 import 'support_screen.dart';
 
@@ -25,7 +22,6 @@ import 'support_screen.dart';
 const appStoreId = '';
 const contactEmail = 'info@revvin.net';
 
-/// الإعدادات بنفس صفوف النسخة الأصلية وترتيبها، وتحتها الصفوف الجديدة.
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
@@ -36,195 +32,108 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = context.watch<AppState>();
     final cloud = context.watch<CloudService>();
-    const iconColor = Colors.white;
 
-    return KanzPage(
-      title: tr(context, 'tabSettings'),
-      onHeart: () => _push(context, const SupportScreen()),
+    Widget nav(IconData icon, String key, VoidCallback onTap) => ListTile(
+          leading: Icon(icon),
+          title: Text(tr(context, key)),
+          trailing: const Icon(Icons.chevron_right, color: Colors.white54),
+          onTap: onTap,
+        );
+
+    return Scaffold(
+      appBar: AppBar(title: Text(tr(context, 'tabSettings'))),
       body: ListView(
-        padding: EdgeInsets.zero,
+        padding: const EdgeInsets.only(bottom: 32),
         children: [
-          // ---- صفوف النسخة الأصلية
-          KanzRow(
-            icon: const Icon(Icons.language, color: iconColor, size: 40),
-            title: tr(context, 'language'),
-            onTap: () => _pickLanguage(context),
-          ),
-          KanzRow(
-            icon: const Icon(Icons.favorite_border, color: iconColor, size: 40),
-            title: tr(context, 'support'),
-            onTap: () => _push(context, const SupportScreen()),
-          ),
-          KanzRow(
-            icon: const CircledIcon(Icons.star),
-            title: tr(context, 'rate'),
-            onTap: _rate,
-          ),
-          KanzRow(
-            icon: const Icon(Icons.alternate_email, color: iconColor, size: 40),
-            title: tr(context, 'contact'),
-            onTap: () => launchUrl(
-              Uri.parse('mailto:$contactEmail?subject=Kanz%20Almuslim'),
+          if (cloud.available) _AccountCard(cloud: cloud, onOpen: () => _push(context, const AccountScreen())),
+          Card(
+            child: Column(
+              children: [
+                nav(Icons.format_list_bulleted, 'manageDhikr', () => _push(context, const ManageDhikrScreen())),
+                nav(Icons.notifications_active_outlined, 'reminders', () => _push(context, const RemindersScreen())),
+              ],
             ),
           ),
-          KanzRow(
-            icon: const Icon(Icons.ios_share, color: iconColor, size: 38),
-            title: tr(context, 'share'),
-            onTap: () => SharePlus.instance.share(
-              ShareParams(text: tr(context, 'shareText')),
+          Card(
+            child: Column(
+              children: [
+                SwitchListTile(
+                  secondary: const Icon(Icons.volume_up_outlined, color: KanzColors.primary),
+                  title: Text(tr(context, 'sound')),
+                  value: s.soundOn,
+                  onChanged: s.setSound,
+                ),
+                SwitchListTile(
+                  secondary: const Icon(Icons.vibration, color: KanzColors.primary),
+                  title: Text(tr(context, 'vibration')),
+                  value: s.vibrationOn,
+                  onChanged: s.setVibration,
+                ),
+                SwitchListTile(
+                  secondary: const Icon(Icons.nightlight_round, color: KanzColors.primary),
+                  title: Text(tr(context, 'dnd')),
+                  subtitle: s.dnd
+                      ? Text(
+                          '${tr(context, 'dndFrom')} ${_hour(context, s.dndStartHour)} ${tr(context, 'to')} ${_hour(context, s.dndEndHour)}',
+                          style: const TextStyle(color: Colors.white70),
+                        )
+                      : null,
+                  value: s.dnd,
+                  onChanged: (v) => v ? _pickDnd(context) : s.updateReminders(dndOn: false),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.language),
+                  title: Text(tr(context, 'language')),
+                  trailing: SegmentedButton<String>(
+                    showSelectedIcon: false,
+                    segments: const [
+                      ButtonSegment(value: 'ar', label: Text('عربي')),
+                      ButtonSegment(value: 'en', label: Text('EN')),
+                    ],
+                    selected: {s.language},
+                    onSelectionChanged: (v) => s.setLanguage(v.first),
+                  ),
+                ),
+              ],
             ),
           ),
-          KanzRow(
-            icon: const KanzLogo(size: 38),
-            title: tr(context, 'about'),
-            onTap: () => _push(context, const AboutScreen()),
-          ),
-          KanzRow(
-            icon: const CircledIcon(Icons.nightlight_round),
-            title: tr(context, 'dnd'),
-            subtitle: s.dnd
-                ? '${tr(context, 'dndFrom')} ${_hour(context, s.dndStartHour)} ${tr(context, 'to')} ${_hour(context, s.dndEndHour)}'
-                : null,
-            onTap: s.dnd ? () => _pickDnd(context) : null,
-            indentSeparator: false,
-            trailing: KanzSwitch(
-              value: s.dnd,
-              onChanged: (v) async {
-                if (v) {
-                  await _pickDnd(context);
-                } else {
-                  await s.updateReminders(dndOn: false);
-                }
-              },
+          Card(
+            child: Column(
+              children: [
+                nav(Icons.favorite_border, 'support', () => _push(context, const SupportScreen())),
+                nav(Icons.star_border, 'rate', _rate),
+                nav(Icons.alternate_email, 'contact',
+                    () => launchUrl(Uri.parse('mailto:$contactEmail?subject=Kanz%20Almuslim'))),
+                nav(Icons.ios_share, 'share',
+                    () => SharePlus.instance.share(ShareParams(text: tr(context, 'shareText')))),
+                ListTile(
+                  leading: const KanzLogo(size: 26),
+                  title: Text(tr(context, 'about')),
+                  trailing: const Icon(Icons.chevron_right, color: Colors.white54),
+                  onTap: () => _push(context, const AboutScreen()),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 22),
-          // ---- الإضافات الجديدة
-          Container(height: 1, color: KanzColors.separator),
-          if (cloud.available)
-            KanzRow(
-              icon: const Icon(
-                Icons.person_outline,
-                color: iconColor,
-                size: 40,
-              ),
-              title: tr(context, 'account'),
-              subtitle: cloud.signedIn
-                  ? cloud.displayName
-                  : tr(context, 'tapToSignIn'),
-              onTap: () => cloud.signedIn
-                  ? _push(context, const AccountScreen())
-                  : showSignInSheet(context),
-            ),
-          KanzRow(
-            icon: const Icon(
-              Icons.emoji_events_outlined,
-              color: iconColor,
-              size: 40,
-            ),
-            title: tr(context, 'ranking'),
-            onTap: () {
-              // بدون سيرفر: لوحة Game Center / Play Games.
-              if (!cloud.available) {
-                GamesService.instance.showLeaderboard();
-              } else if (cloud.signedIn) {
-                _push(context, const RankingScreen());
-              } else {
-                showSignInSheet(context);
-              }
-            },
-          ),
-          if (cloud.available)
-            KanzRow(
-              icon: const Icon(
-                Icons.people_outline,
-                color: iconColor,
-                size: 40,
-              ),
-              title: tr(context, 'friends'),
-              onTap: () => cloud.signedIn
-                  ? _push(context, const FriendsScreen())
-                  : showSignInSheet(context),
-            ),
-          KanzRow(
-            icon: const BeadsIcon(color: iconColor, size: 36),
-            title: tr(context, 'manageDhikr'),
-            onTap: () => _push(context, const ManageDhikrScreen()),
-          ),
-          KanzRow(
-            icon: const Icon(
-              Icons.volume_up_outlined,
-              color: iconColor,
-              size: 38,
-            ),
-            title: tr(context, 'sound'),
-            indentSeparator: false,
-            trailing: KanzSwitch(value: s.soundOn, onChanged: s.setSound),
-          ),
-          KanzRow(
-            icon: const Icon(Icons.vibration, color: iconColor, size: 38),
-            title: tr(context, 'vibration'),
-            indentSeparator: false,
-            trailing: KanzSwitch(
-              value: s.vibrationOn,
-              onChanged: s.setVibration,
-            ),
-          ),
-          const SizedBox(height: 24),
         ],
       ),
     );
   }
 
   String _hour(BuildContext context, int h) =>
-      MaterialLocalizations.of(context)
-          .formatTimeOfDay(TimeOfDay(hour: h, minute: 0));
+      MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay(hour: h, minute: 0));
 
   Future<void> _rate() async {
     final review = InAppReview.instance;
     try {
       if (appStoreId.isNotEmpty || isAndroid) {
-        await review.openStoreListing(
-          appStoreId: appStoreId.isEmpty ? null : appStoreId,
-        );
+        await review.openStoreListing(appStoreId: appStoreId.isEmpty ? null : appStoreId);
       } else if (await review.isAvailable()) {
         await review.requestReview();
       }
     } catch (e) {
       debugPrint('Rate failed: $e');
     }
-  }
-
-  Future<void> _pickLanguage(BuildContext context) async {
-    final s = context.read<AppState>();
-    final lang = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            KanzRow(
-              title: 'العربيه',
-              chevron: false,
-              onTap: () => Navigator.pop(ctx, 'ar'),
-              trailing: s.language == 'ar'
-                  ? const Icon(Icons.check, color: KanzColors.cyan)
-                  : null,
-            ),
-            KanzRow(
-              title: 'English',
-              chevron: false,
-              onTap: () => Navigator.pop(ctx, 'en'),
-              trailing: s.language == 'en'
-                  ? const Icon(Icons.check, color: KanzColors.cyan)
-                  : null,
-            ),
-          ],
-        ),
-      ),
-    );
-    if (lang != null) s.setLanguage(lang);
   }
 
   Future<void> _pickDnd(BuildContext context) async {
@@ -242,5 +151,38 @@ class SettingsScreen extends StatelessWidget {
     );
     if (to == null) return;
     await s.updateReminders(dndOn: true, dndStart: from.hour, dndEnd: to.hour);
+  }
+}
+
+class _AccountCard extends StatelessWidget {
+  const _AccountCard({required this.cloud, required this.onOpen});
+  final CloudService cloud;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!cloud.signedIn) {
+      return Card(
+        child: ListTile(
+          leading: const Avatar(name: ''),
+          title: Text(tr(context, 'guest')),
+          subtitle: Text(tr(context, 'signInToCompete'), style: const TextStyle(color: Colors.white70)),
+          trailing: FilledButton(
+            style: FilledButton.styleFrom(minimumSize: const Size(48, 40)),
+            onPressed: () => showSignInSheet(context),
+            child: Text(tr(context, 'signIn')),
+          ),
+        ),
+      );
+    }
+    return Card(
+      child: ListTile(
+        leading: Avatar(name: cloud.displayName, url: cloud.user?.photoURL),
+        title: Text(cloud.displayName),
+        subtitle: Text(tr(context, 'account'), style: const TextStyle(color: Colors.white70)),
+        trailing: const Icon(Icons.chevron_right, color: Colors.white54),
+        onTap: onOpen,
+      ),
+    );
   }
 }

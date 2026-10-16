@@ -6,10 +6,10 @@ import 'state/app_state.dart';
 /// نصوص الواجهة. النصوص العربية مطابقة للنسخة الأصلية قدر الإمكان.
 const _strings = <String, Map<String, String>>{
   'appName': {'ar': 'كنز المسلم', 'en': 'Kanz Al Muslim'},
-  'tabTasbeeh': {'ar': 'سبحه', 'en': 'Tasbeeh'},
+  'tabTasbeeh': {'ar': 'تسبيح', 'en': 'Tasbeeh'},
   'tabRecords': {'ar': 'السجل', 'en': 'Records'},
   'tabNotifications': {'ar': 'الاشعارات', 'en': 'Notifications'},
-  'tabSettings': {'ar': 'الاعدادات', 'en': 'Settings'},
+  'tabSettings': {'ar': 'الإعدادات', 'en': 'Settings'},
   'normalMember': {'ar': 'العضويه العاديه', 'en': 'Standard membership'},
   'premiumMember': {'ar': 'العضويه المميزه', 'en': 'Premium membership'},
   'guest': {'ar': 'زائر', 'en': 'Guest'},
@@ -100,8 +100,8 @@ const _strings = <String, Map<String, String>>{
     'en': 'Ranking is not available right now',
   },
   'today': {'ar': 'اليوم', 'en': 'Today'},
-  'thisWeek': {'ar': 'الاسبوع', 'en': 'Week'},
-  'thisMonth': {'ar': 'الشهر', 'en': 'Month'},
+  'thisWeek': {'ar': 'هذا الأسبوع', 'en': 'This week'},
+  'thisMonth': {'ar': 'هذا الشهر', 'en': 'This month'},
   'allTime': {'ar': 'الكل', 'en': 'All'},
   'world': {'ar': 'العالم', 'en': 'World'},
   'you': {'ar': 'أنت', 'en': 'You'},
@@ -149,6 +149,26 @@ const _strings = <String, Map<String, String>>{
     'ar': 'حدث خطأ، حاول مره أخرى',
     'en': 'Something went wrong, try again',
   },
+  'tabRanking': {'ar': 'الترتيب', 'en': 'Ranking'},
+  'tabFriends': {'ar': 'الأصدقاء', 'en': 'Friends'},
+  'total': {'ar': 'المجموع', 'en': 'Total'},
+  'tapToCount': {'ar': 'المس الشاشة للتسبيح', 'en': 'Tap anywhere to count'},
+  'swipeToChange': {'ar': 'اسحب يميناً أو يساراً لتغيير الذكر', 'en': 'Swipe to change dhikr'},
+  'resetCycle': {'ar': 'تصفير العداد', 'en': 'Reset counter'},
+  'vibrateEvery': {'ar': 'الاهتزاز كل', 'en': 'Vibrate every'},
+  'continue': {'ar': 'متابعة', 'en': 'Continue'},
+  'last30': {'ar': 'آخر ٣٠ يوماً', 'en': 'Last 30 days'},
+  'times': {'ar': 'مرة', 'en': 'times'},
+  'accept': {'ar': 'قبول', 'en': 'Accept'},
+  'decline': {'ar': 'رفض', 'en': 'Decline'},
+  'chat': {'ar': 'محادثة', 'en': 'Chat'},
+  'reminders': {'ar': 'التذكير', 'en': 'Reminders'},
+  'minutes': {'ar': 'دقيقة', 'en': 'min'},
+  'addReminder': {'ar': 'إضافة تذكير', 'en': 'Add reminder'},
+  'customReminders': {'ar': 'تذكير مخصص', 'en': 'Custom reminders'},
+  'reminderHint': {'ar': 'ذكر معيّن يتكرر كل عدد من الدقائق', 'en': 'A chosen dhikr repeating every few minutes'},
+  'general': {'ar': 'عام', 'en': 'General'},
+  'more': {'ar': 'المزيد', 'en': 'More'},
 };
 
 /// اللغة تُقرأ بدون اشتراك، والتطبيق كله يُعاد بناؤه عند تغيير اللغة
@@ -162,4 +182,20 @@ String trLang(String lang, String key, {Map<String, String>? args}) {
   var s = _strings[key]?[lang] ?? _strings[key]?['ar'] ?? key;
   args?.forEach((k, v) => s = s.replaceAll('{$k}', v));
   return s;
+}
+
+/// الأرقام العربية عند اختيار اللغة العربية.
+String fmtNum(BuildContext context, int n) {
+  final lang = Provider.of<AppState>(context, listen: false).language;
+  return fmtNumLang(lang, n);
+}
+
+String fmtNumLang(String lang, int n) {
+  final s = n.toString();
+  if (lang != 'ar') return s;
+  const digits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+  return s.split('').map((c) {
+    final d = int.tryParse(c);
+    return d == null ? c : digits[d];
+  }).join();
 }
