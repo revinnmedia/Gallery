@@ -5,7 +5,8 @@ import 'package:flutter/material.dart';
 
 import '../theme.dart';
 
-/// رحلة نقطة واحدة: من مكان الإصبع، تلتف حول السبحة، ثم تدخل حبتها.
+/// رحلة نقطة واحدة: من مكان الإصبع تدخل داخل حلقة السبحة، وتمرّ على
+/// الحبات المضاءة فتومض وتكبر قليلاً، حتى تصل إلى أول مكان فارغ.
 class OrbitFlight {
   const OrbitFlight({
     required this.start,
@@ -13,7 +14,8 @@ class OrbitFlight {
     required this.center,
     required this.radius,
     required this.beadRadius,
-    required this.targetAngle,
+    required this.target,
+    this.beads = 33,
     required this.onArrive,
   });
 
@@ -23,7 +25,8 @@ class OrbitFlight {
   final Offset center;
   final double radius;
   final double beadRadius;
-  final double targetAngle;
+  final int target;
+  final int beads;
   final VoidCallback onArrive;
 }
 
@@ -36,7 +39,7 @@ class OrbitLayer extends StatefulWidget {
 }
 
 class OrbitLayerState extends State<OrbitLayer> with TickerProviderStateMixin {
-  static const _flashMs = 340;
+  static const _flashMs = 260;
   final _flights = <_Flight>[];
 
   void add(OrbitFlight f) {
@@ -48,10 +51,10 @@ class OrbitLayerState extends State<OrbitLayer> with TickerProviderStateMixin {
     final c = box.globalToLocal(f.center);
     final v = box.globalToLocal(f.start) - c;
     final th0 = atan2(v.dy, v.dx);
-    // تدور مع اتجاه امتلاء السبحة (عكس عقارب الساعة)، لفّة واحدة تقريباً على الأقل.
-    var sweep = (th0 - f.targetAngle) % (2 * pi);
-    if (sweep < 0.75 * pi) sweep += 2 * pi;
-    final orbitMs = (620 + 240 * sweep / pi).round();
+    // تسير مع اتجاه امتلاء السبحة (عكس عقارب الساعة) مباشرة إلى حبتها.
+    final targetAngle = -f.target * 2 * pi / f.beads;
+    final sweep = (th0 - targetAngle) % (2 * pi);
+    final orbitMs = (420 + 520 * sweep / (2 * pi)).round();
 
     final ctrl = AnimationController(
       vsync: this,
@@ -67,6 +70,8 @@ class OrbitLayerState extends State<OrbitLayer> with TickerProviderStateMixin {
       radius: f.radius,
       beadRadius: f.beadRadius,
       startSize: f.startSize,
+      target: f.target,
+      beads: f.beads,
     );
     ctrl.addListener(() {
       if (!flight.arrived && ctrl.value >= flight.split) {
@@ -120,6 +125,8 @@ class _Flight {
     required this.radius,
     required this.beadRadius,
     required this.startSize,
+    required this.target,
+    required this.beads,
   });
 
   final AnimationController ctrl;
@@ -131,22 +138,31 @@ class _Flight {
   final double radius;
   final double beadRadius;
   final double startSize;
+  final int target;
+  final int beads;
   bool arrived = false;
 
-  /// المدار يقع خارج الحبات بقليل.
-  double get outer => radius + beadRadius * 2.4;
+  /// المسار داخل حلقة الحبات بقليل.
+  double get inner => radius - beadRadius * 2.3;
+
+  double angle(double t) => th0 - sweep * Curves.easeInOutSine.transform(t);
 
   Offset pos(double t) {
-    final a = th0 - sweep * Curves.easeInOutSine.transform(t);
+    final a = angle(t);
     final double r;
-    if (t < 0.3) {
-      r = lerpDouble(r0, outer, Curves.easeOut.transform(t / 0.3))!;
-    } else if (t < 0.72) {
-      r = outer;
+    if (t < 0.25) {
+      r = lerpDouble(r0, inner, Curves.easeOut.transform((t / 0.25).clamp(0.0, 1.0)))!;
+    } else if (t < 0.85) {
+      r = inner;
     } else {
-      r = lerpDouble(outer, radius, Curves.easeInOutCubic.transform((t - 0.72) / 0.28))!;
+      r = lerpDouble(inner, radius, Curves.easeInOut.transform(((t - 0.85) / 0.15).clamp(0.0, 1.0)))!;
     }
     return center + Offset(cos(a), sin(a)) * r;
+  }
+
+  Offset beadPos(int i) {
+    final a = -i * 2 * pi / beads;
+    return center + Offset(cos(a), sin(a)) * radius;
   }
 
   /// قطر النقطة: يصغر تدريجياً من حجم الإصبع إلى حجم الحبة.
@@ -170,27 +186,45 @@ class _OrbitPainter extends CustomPainter {
   }
 
   void _paintDot(Canvas canvas, _Flight f, double t) {
-    // ذيل خفيف خلف النقطة.
-    for (var k = 9; k >= 1; k--) {
-      final tk = t - k * 0.02;
-      if (tk < 0) continue;
-      final fade = 1 - k / 10;
-      canvas.drawCircle(
-        f.pos(tk),
-        f.size(tk) / 2 * (0.35 + 0.6 * fade),
-        Paint()..color = KanzColors.beadLit.withValues(alpha: 0.32 * fade),
-      );
-    }
+    _paintBeadGlow(canvas, f, t);
     final p = f.pos(t);
     final s = f.size(t);
     canvas.drawCircle(
       p,
-      s * 0.95,
+      s * 0.8,
       Paint()
-        ..color = KanzColors.cyan.withValues(alpha: 0.35)
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, s * 0.45),
+        ..color = KanzColors.cyan.withValues(alpha: 0.3)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, s * 0.35),
     );
-    canvas.drawCircle(p, s / 2, Paint()..color = Color.lerp(Colors.white, KanzColors.beadLit, t * 0.7)!);
+    canvas.drawCircle(p, s / 2, Paint()..color = Color.lerp(Colors.white, KanzColors.beadLit, t * 0.6)!);
+  }
+
+  /// الحبات المضاءة القريبة من النقطة تومض وتكبر قليلاً، ويزداد ذلك
+  /// تدريجياً كلما اقتربت النقطة من المكان الفارغ.
+  void _paintBeadGlow(Canvas canvas, _Flight f, double t) {
+    final a = f.angle(t);
+    final grow = 0.1 + 0.2 * t;
+    for (var i = 0; i < f.target; i++) {
+      final ai = -i * 2 * pi / f.beads;
+      // المسافة الزاوية بين النقطة والحبة (الحبات خلفها تنطفئ ببطء).
+      var d = (ai - a) % (2 * pi);
+      if (d > pi) d -= 2 * pi;
+      final k = d >= 0 ? exp(-pow(d / 0.32, 2)) : exp(-pow(d / 0.18, 2));
+      if (k < 0.03) continue;
+      final at = f.beadPos(i);
+      canvas.drawCircle(
+        at,
+        f.beadRadius * (1.5 + grow),
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.35 * k)
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, f.beadRadius * 0.7),
+      );
+      canvas.drawCircle(
+        at,
+        f.beadRadius * (1 + grow * k),
+        Paint()..color = Color.lerp(KanzColors.beadLit, Colors.white, 0.45 * k)!,
+      );
+    }
   }
 
   void _paintFlash(Canvas canvas, _Flight f, double p) {
@@ -198,7 +232,7 @@ class _OrbitPainter extends CustomPainter {
     final e = Curves.easeOut.transform(p);
     canvas.drawCircle(
       at,
-      f.beadRadius * (1 + 1.7 * e),
+      f.beadRadius * (1 + 1.1 * e),
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.2 * (1 - p) + 0.4

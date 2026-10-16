@@ -141,7 +141,7 @@ void main() {
     await _pump(t, await _state());
     await t.tapAt(const Offset(196, 450));
     var ms = 0;
-    for (final at in [120, 260, 420, 650, 900, 1150, 1500]) {
+    for (final at in [200, 420, 560, 700, 850, 1000, 1250]) {
       await t.pump(Duration(milliseconds: at - ms));
       ms = at;
       await expectLater(find.byType(MaterialApp), matchesGoldenFile('motion/m_${at.toString().padLeft(4, '0')}.png'));

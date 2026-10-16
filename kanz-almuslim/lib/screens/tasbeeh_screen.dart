@@ -93,7 +93,7 @@ class _TasbeehScreenState extends State<TasbeehScreen> with SingleTickerProvider
         center: box.localToGlobal(box.size.center(Offset.zero)),
         radius: BeadRing.ringRadius(side),
         beadRadius: BeadRing.beadRadius(side),
-        targetAngle: BeadRing.angleOf(bead),
+        target: bead,
         onArrive: () => _arrived(bead),
       ),
     );
