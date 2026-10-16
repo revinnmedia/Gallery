@@ -54,7 +54,7 @@ class OrbitLayerState extends State<OrbitLayer> with TickerProviderStateMixin {
     // تلف لفّة كاملة داخل كل الحبات مع اتجاه امتلاء السبحة، ثم تستقر في حبتها.
     final targetAngle = -f.target * 2 * pi / f.beads;
     final sweep = (th0 - targetAngle) % (2 * pi) + 2 * pi;
-    final orbitMs = (560 + 330 * sweep / (2 * pi)).round();
+    final orbitMs = (650 + 380 * sweep / (2 * pi)).round();
 
     final ctrl = AnimationController(
       vsync: this,
@@ -64,7 +64,7 @@ class OrbitLayerState extends State<OrbitLayer> with TickerProviderStateMixin {
       ctrl: ctrl,
       split: orbitMs / (orbitMs + _flashMs),
       center: c,
-      r0: v.distance,
+      start: c + v,
       th0: th0,
       sweep: sweep,
       radius: f.radius,
@@ -79,7 +79,8 @@ class OrbitLayerState extends State<OrbitLayer> with TickerProviderStateMixin {
         f.onArrive();
       }
     });
-    ctrl.forward().whenComplete(() {
+    // نبدأ بعد إطار واحد حتى لا تتوقف النقطة لحظة التسليم من الإصبع.
+    ctrl.forward(from: 16 / (orbitMs + _flashMs)).whenComplete(() {
       if (!mounted) return;
       setState(() => _flights.remove(flight));
       ctrl.dispose();
@@ -119,7 +120,7 @@ class _Flight {
     required this.ctrl,
     required this.split,
     required this.center,
-    required this.r0,
+    required this.start,
     required this.th0,
     required this.sweep,
     required this.radius,
@@ -132,7 +133,7 @@ class _Flight {
   final AnimationController ctrl;
   final double split;
   final Offset center;
-  final double r0;
+  final Offset start;
   final double th0;
   final double sweep;
   final double radius;
@@ -142,23 +143,17 @@ class _Flight {
   final int beads;
   bool arrived = false;
 
-  /// المسار يمر داخل الحبات نفسها (على خط مراكزها).
-  double get inner => radius;
+  /// منحنى سرعة واحد ناعم: تنطلق بسرعة الإصبع، ثم تتباطأ تدريجياً حتى تستقر.
+  static const _glide = Cubic(0.3, 0.55, 0.25, 1);
 
-  /// تنطلق بأقصى سرعة (تكمل اندفاع الإصبع) ثم تتباطأ بنعومة حتى تستقر.
-  double angle(double t) => th0 - sweep * Curves.easeOutCubic.transform(t);
+  double angle(double t) => th0 - sweep * _glide.transform(t);
 
   Offset pos(double t) {
     final a = angle(t);
-    final double r;
-    if (t < 0.12) {
-      r = lerpDouble(r0, inner, Curves.easeOut.transform((t / 0.12).clamp(0.0, 1.0)))!;
-    } else if (t < 0.8) {
-      r = inner;
-    } else {
-      r = lerpDouble(inner, radius, Curves.easeOutBack.transform(((t - 0.8) / 0.2).clamp(0.0, 1.0)))!;
-    }
-    return center + Offset(cos(a), sin(a)) * r;
+    final onRing = center + Offset(cos(a), sin(a)) * radius;
+    // تنساب من مكان الإصبع مباشرة نحو نقطتها على خط الحبات (بلا انحراف للخارج).
+    final enter = Curves.easeOutCubic.transform((t / 0.18).clamp(0.0, 1.0));
+    return Offset.lerp(start, onRing, enter)!;
   }
 
   Offset beadPos(int i) {
@@ -188,6 +183,16 @@ class _OrbitPainter extends CustomPainter {
 
   void _paintDot(Canvas canvas, _Flight f, double t) {
     _paintBeadGlow(canvas, f, t);
+    // أثر قصير وخفيف يجعل الحركة السريعة تبدو انسيابية.
+    for (var k = 4; k >= 1; k--) {
+      final tk = t - k * 0.012;
+      if (tk < 0) continue;
+      canvas.drawCircle(
+        f.pos(tk),
+        f.size(tk) / 2 * (1 - k * 0.12),
+        Paint()..color = KanzColors.beadLit.withValues(alpha: 0.16 * (1 - k / 5)),
+      );
+    }
     final p = f.pos(t);
     final s = f.size(t);
     canvas.drawCircle(
