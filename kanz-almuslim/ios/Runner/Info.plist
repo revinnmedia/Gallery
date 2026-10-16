@@ -6,6 +6,19 @@
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>GIDClientID</key>
+	<string>557667158104-q49nbalkf23k1429vfageb5mi1aoaomn.apps.googleusercontent.com</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.557667158104-q49nbalkf23k1429vfageb5mi1aoaomn</string>
+			</array>
+		</dict>
+	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>نستخدم موقعك التقريبي لحساب وقتي الفجر والعصر لتذكيرك بالتسبيح قبل الشروق وقبل الغروب. يبقى الموقع على جهازك.</string>
 	<key>CFBundleDisplayName</key>
