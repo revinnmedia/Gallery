@@ -60,6 +60,9 @@ class _FingersRowState extends State<FingersRow> with TickerProviderStateMixin {
   late final List<bool> _launched;
   late final List<int> _launchSlot;
 
+  /// اختفى تماماً (انتهى طيرانه): عندها فقط تتزحلق الأصابع الباقية لليمين.
+  late final List<bool> _gone;
+
   /// عند عودة الأصابع تأخذ أماكنها فوراً بلا انزلاق.
   bool _instant = false;
   static const _slide = Duration(milliseconds: 220);
@@ -77,6 +80,7 @@ class _FingersRowState extends State<FingersRow> with TickerProviderStateMixin {
     _keys = List.generate(widget.count, (_) => GlobalKey());
     _launched = List.filled(widget.count, false);
     _launchSlot = List.filled(widget.count, 0);
+    _gone = List.filled(widget.count, false);
   }
 
   @override
@@ -117,12 +121,12 @@ class _FingersRowState extends State<FingersRow> with TickerProviderStateMixin {
     return true;
   }
 
-  /// مكان الإصبع من اليمين: الأصابع الباقية تتزحلق لليمين لتملأ الفراغ.
+  /// مكان الإصبع من اليمين: بعد اختفاء الإصبع المنطلق تتزحلق الباقية لليمين لتملأ الفراغ.
   int _slot(int i) {
     if (_launched[i]) return _launchSlot[i];
     var k = 0;
     for (var j = 0; j < i; j++) {
-      if (!_launched[j]) k++;
+      if (!_gone[j]) k++;
     }
     return k;
   }
@@ -142,7 +146,10 @@ class _FingersRowState extends State<FingersRow> with TickerProviderStateMixin {
       final center = Offset(w / 2, h + _drag[i] - h * riseFactor - dot / 2);
       widget.onMorphed(box.localToGlobal(center), dot, payload);
     }
-    setState(() => _drag[i] = 0);
+    setState(() {
+      _drag[i] = 0;
+      _gone[i] = true;
+    });
     if (_allGone) await _regrowAll();
   }
 
@@ -154,6 +161,7 @@ class _FingersRowState extends State<FingersRow> with TickerProviderStateMixin {
         _grow[j].value = 0;
         _fly[j].value = 0;
         _launched[j] = false;
+        _gone[j] = false;
       }
     });
     await Future<void>.delayed(const Duration(milliseconds: 120));
@@ -219,7 +227,7 @@ class _FingersRowState extends State<FingersRow> with TickerProviderStateMixin {
                             fly: _fly[i].value,
                             grow: _grow[i].value,
                             drag: _drag[i],
-                            lead: slot == 0,
+                            lead: slot == 0 && !_gone[i],
                           ),
                         ),
                       ),
