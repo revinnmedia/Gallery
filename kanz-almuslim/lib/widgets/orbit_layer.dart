@@ -51,9 +51,11 @@ class OrbitLayerState extends State<OrbitLayer> with TickerProviderStateMixin {
     final c = box.globalToLocal(f.center);
     final v = box.globalToLocal(f.start) - c;
     final th0 = atan2(v.dy, v.dx);
-    // تلف لفّة كاملة داخل كل الحبات مع اتجاه امتلاء السبحة، ثم تستقر في حبتها.
+    // لفّة واحدة مع اتجاه امتلاء السبحة حتى حبتها. إذا كانت الحبة قريبة جداً
+    // من نقطة الدخول تكمل لفّة واحدة كاملة بدل قفزة قصيرة.
     final targetAngle = -f.target * 2 * pi / f.beads;
-    final sweep = (th0 - targetAngle) % (2 * pi) + 2 * pi;
+    var sweep = (th0 - targetAngle) % (2 * pi);
+    if (sweep < pi / 2) sweep += 2 * pi;
     final orbitMs = (650 + 380 * sweep / (2 * pi)).round();
 
     final ctrl = AnimationController(
